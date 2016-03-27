@@ -1,0 +1,60 @@
+\documentclass[12pt]{article}
+\usepackage{mathtext}
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[russian]{babel}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{enumerate}
+\usepackage{mathtools}
+
+\DeclarePairedDelimiter\floor{\lfloor}{\rfloor}
+\newcommand{\sqrtn}{\sqrt n}
+\newcommand{\fsqrtn}{\floor{\sqrtn}}
+\newcommand{\Tsqrtn}{T(\sqrtn)}
+\newcommand{\Tfsqrtn}{T(\fsqrtn)}
+\newcommand{\logn}[1][n]{\log #1}
+\newcommand{\loglogn}[1][n]{\log\log #1}
+\newcommand{\nloglogn}[1][n]{#1\log\log #1}
+
+\begin{document}
+	\Large
+	\noindent
+	$T(n) = \sqrtn\Tfsqrtn + n$\\
+	Ответ: $T(n) = \Theta(\nloglogn)$. Докажем это:
+	\begin{itemize}
+		\item
+			$T(n) = O(\nloglogn)$, то есть\\
+			$$\Tfsqrtn \le c\nloglogn[\fsqrtn] \implies T(n) \le c\nloglogn$$
+			Доказательство:
+			$$T(n) = \sqrtn\Tfsqrtn + n$$
+			$$T(n) \le \sqrtn(c\nloglogn[\fsqrtn]) + n$$
+			$$T(n) \le \sqrtn(c\nloglogn[\sqrtn]) + n$$
+			$$T(n) \le cn\loglogn[\sqrtn] + n$$
+			$$T(n) \le cn\log(\frac{1}{2}\logn) + n$$
+			$$T(n) \le cn(\loglogn - 1) + n$$
+			$$T(n) \le c\nloglogn + n(1-c)$$
+			Возьмём $c > 1$, тогда $(1 - c) < 0$ и значит\\
+			$$T(n) \le c\nloglogn \qed$$
+			\newpage
+		\item
+			$T(n) = \Omega(\nloglogn)$, то есть\\
+			$$\Tfsqrtn \ge c\nloglogn[\fsqrtn] \implies T(n) \ge c\nloglogn$$
+			Доказательство:
+			$$T(n) = \sqrtn\Tfsqrtn + n$$
+			$$T(n) \ge \sqrtn(c\nloglogn[\fsqrtn]) + n$$
+			$$\begin{cases}
+				\fsqrtn = \sqrtn - \alpha,\ 0 \le \alpha \le 1\\
+				\fsqrtn \ge \sqrt[4]{n}
+			\end{cases} \implies$$
+			$$T(n) \ge c\sqrtn(\sqrtn-\alpha)\loglogn[{\sqrt[4]{n}}]) + n$$
+			$$T(n) \ge cn\log(\frac{1}{4}\logn) - c\alpha\sqrtn\loglogn[{\sqrt[4]{n}}]) + n$$
+			$$T(n) \ge cn(\loglogn - 2) - c\alpha\sqrtn\loglogn[{\sqrt[4]{n}}]) + n$$
+			$$T(n) \ge cn\loglogn + (1 - 2c)n - c\alpha\sqrtn\loglogn[{\sqrt[4]{n}}])$$
+			Начиная с некоторого $n$
+			$$-c\alpha\sqrtn\loglogn[{\sqrt[4]{n}}]) \ge -c\alpha n \ge -cn \implies$$
+			$$T(n) \ge cn\loglogn + (1 - 3c)n$$
+			Возьмём $c < \frac{1}{3}$, тогда $(1 - 3c) > 0$ \\
+			и начиная с некоторого $n$
+			$$T(n) \ge c\nloglogn \qed$$
+	\end{itemize}
+\end{document}

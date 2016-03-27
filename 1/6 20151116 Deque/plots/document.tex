@@ -1,0 +1,31 @@
+\documentclass{article}
+\usepackage[dvipsnames]{xcolor}
+\usepackage[utf8]{inputenc}
+\usepackage[russian]{babel}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage[left=10mm, right=10mm, top=20mm, bottom=10mm]{geometry}
+
+\begin{document}
+
+\begin{tikzpicture}
+	\begin{axis}[
+		width = \textwidth,
+		legend pos = north east,
+		axis lines = middle,
+		xlabel = номер операции,
+		ylabel = размер вектора,
+		every axis y label/.style={at={(current axis.north west)},above=2mm},
+	    x label style={at={(axis description cs:0.5,-0.1)},anchor=north}
+	]
+		\addplot[mark=none,color=red] 
+		table[] {Random.txt};
+		
+		\addplot[mark=none,color=green] 
+		table[] {PartIncreaseDecreaseCycle.txt};	
+		
+		\legend{обычный рандом, рандом с большими скачками}
+	\end{axis}
+\end{tikzpicture}
+
+\end{document}

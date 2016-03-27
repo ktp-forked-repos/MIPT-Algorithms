@@ -1,0 +1,38 @@
+\documentclass[12pt]{article}
+\usepackage{mathtext}
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[russian]{babel}
+\usepackage{amsmath, amssymb}
+\usepackage{enumerate}
+\title{Задача 2}
+\date{}
+
+\begin{document}
+	\large
+	\maketitle
+	\begin{enumerate}[a.]
+		\item
+			$T(n) = 5T(n/4) + n$\\
+			Обозначим $f(n) = n,\; g(n) = n^{\log_4 5}$\\
+			Сравним $f(n)\; и\; g(n)$\\
+			$f(n) = O(n^{(\log _4 5)-\varepsilon}),\; \varepsilon>0 $\\
+			Значит $T(n) = \Theta(g(n)) = \Theta(n^{\log_4 5})$
+		\item
+			$T(n) = T(4n/5) + 1$\\
+			Обозначим $f(n) = 1,\; g(n) = n^{\log_{5/4} 1} = n^0 = 1$\\
+			Сравним $f(n)\; и\; g(n)$\\
+			$f(n) = \Theta(g(n))$\\
+			Значит $T(n) = \Theta(g(n)\log n) = \Theta(\log n)$
+		\item
+			$T(n) = 7T(n/8) + n\log n$\\
+			Обозначим $f(n) = n\log n,\; g(n) = n^{\log_8 7}$\\
+			Сравним $f(n)\; и\; g(n)$\\
+			$f(n) = \Omega(n^{(\log_8 7) + \varepsilon}),\; \varepsilon>0$\\
+			Проверим, что существует такое $c < 1$, что
+			$$7f(\frac{n}{8}) \le cf(n)$$
+			Возьмём $c = \frac{7}{8}$. Тогда
+			$$cf(n) - 7f(\frac{n}{8}) = \frac{7n}{8}\log n - \frac{7n}{8}\log\frac{n}{8} = \frac{7n}{8}\log 8 \ge 0$$
+			Значит $T(n) = \Theta(f(n)) = \Theta(n\log n)$
+	\end{enumerate}
+\end{document}

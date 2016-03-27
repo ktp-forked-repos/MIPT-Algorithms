@@ -1,0 +1,48 @@
+\documentclass[12pt]{article}
+\usepackage{mathtext}
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[russian]{babel}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{enumerate}
+\usepackage{mathtools}
+
+\DeclarePairedDelimiter\ceil{\lceil}{\rceil}
+%\newcommand{\Tceil}[1]{T(\ceil{#1})}
+\newcommand{\halfn}{\ceil{\frac{n}{2}}}
+\newcommand{\Thalfn}{T(\halfn)}
+\newcommand{\nlogn}[1][n]{#1 \log #1}
+\newcommand{\nslogn}[1][n]{#1 \log^2 #1}
+
+\begin{document}
+	\large
+	\noindent
+	$T(n) = 2\Thalfn + n \log n$\\
+	Ответ: $T(n) = \Theta(\nslogn)$. Докажем это:
+	\begin{itemize}
+		\item
+			$\Thalfn \le c\nslogn[\halfn] \implies T(n) \le c\nslogn$\\
+			$T(n) =  2\Thalfn + \nlogn$\\
+			$T(n) \le 2c\nslogn[\halfn] + \nlogn$\\
+			$T(n) \le c(n + 2)\log^2{\halfn} + \nlogn$\\
+			$T(n) \le c(n + 2)\log^2{\frac{3}{4}n} + \nlogn$\\
+			$T(n) \le c(n + 2)(\log n - \log\frac{4}{3})^2 + \nlogn$\\
+			Обозначим $a = \log\frac{4}{3},\; a > 0$\\
+			$T(n) \le c(n + 2)(\log n - a)^2 + \nlogn$\\
+			$T(n) \le c\nslogn - 2ca\nlogn + cna^2 + 2(\log n - a)^2 + \nlogn$\\
+			$T(n) \le c\nslogn + (1 - 2ca)\nlogn + O(n)$\\
+			Возьмём $c > \frac{1}{2a}$,\\
+			тогда $(1 - 2ca) < 0$ и начиная с некоторого $n$\\
+			$T(n) \le c\nslogn \qed$
+		\item
+			$\Thalfn \ge c\nslogn[\halfn] \implies T(n) \ge c\nslogn$\\
+			$T(n) = 2\Thalfn + \nlogn$\\
+			$T(n) \ge 2(c\nslogn[\halfn]) + \nlogn$\\
+			$T(n) \ge 2(c\nslogn[(\frac{n}{2})]) + \nlogn$\\
+			$T(n) \ge cn(\log n - 1)^2 + \nlogn$\\
+			$T(n) \ge c\nslogn - 2c\nlogn + cn + \nlogn$\\
+			$T(n) \ge c\nslogn + (1 - 2c)\nlogn + cn$\\
+			Возьмём $c < \frac{1}{2}$, тогда\\
+			$(1 - 2c) > 0 \implies T(n) \ge c\nslogn \qed$
+	\end{itemize}
+\end{document}

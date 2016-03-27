@@ -1,0 +1,44 @@
+\documentclass[12pt]{article}
+\usepackage{mathtext}
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[russian]{babel}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{enumerate}
+\usepackage{mathtools}
+
+%\newcommand{\Tceil}[1]{T(\ceil{#1})}
+\newcommand{\logn}{\log n}
+\newcommand{\sqrtn}{\sqrt n}
+\newcommand{\logsn}{\log\sqrtn}
+\newcommand{\e}{\log_2 3}
+
+\begin{document}
+	%\Large
+	\LARGE
+	%\huge
+	\noindent
+	$T(n) = 3T(\sqrtn) + \logn$\\
+	Ответ: $T(n) = \Theta((\logn)^{\e})$. Докажем это:
+	\begin{itemize}
+		\item
+			$T(n) = O(\logn^{\e})$, то есть\\
+			$T(\sqrtn) \le c(\log\sqrtn)^{\e} + d\logsn$\\
+			$\implies T(n) \le c(\logn)^{\e} + d\logn$\\
+			Доказательство:\\
+			$T(n) = 3T(\sqrtn) + \logn$\\
+			$T(n) \le 3(c(\log\sqrtn)^{\e} + d\logsn) + \logn$\\
+			$T(n) \le 3c(\frac{1}{2}\logn)^{\e} + \frac{3d\logn}{2} + \logn$\\
+			$T(n) \le 3c\frac{(\logn)^{\e}}{2^{\e}} + (\frac{3}{2}d + 1)\logn$\\
+			$T(n) \le 3c\frac{(\logn)^{\e}}{3} + (\frac{3}{2}d + 1)\logn$\\
+			$T(n) \le c(\logn)^{\e} + (\frac{3}{2}d + 1)\logn$\\
+			Возьмём $d = -2$. Тогда $(\frac{3}{2}d + 1) = -2 \implies$\\
+			$T(n) \le c(\logn)^{\e} - 2\logn \implies$\\
+			$T(n) \le c(\logn)^{\e} + d\logn \qed$
+		\item
+			Заменив в предыдущем доказательстве все знаки $\le$ на $\ge$ получим\\
+			$T(\sqrtn) \ge c(\log\sqrtn)^{\e} + d\logsn \implies$\\
+			$T(n) \ge c(\logn)^{\e} + d\logn$, то есть\\
+			$T(n) = \Omega(\logn^{\e}) \qed$
+	\end{itemize}
+\end{document}

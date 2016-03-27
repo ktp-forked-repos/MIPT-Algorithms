@@ -1,0 +1,43 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T2A]{fontenc}
+\usepackage[russian]{babel}
+\usepackage{amsmath, amssymb}
+
+\title{Задача 3 (семинар 21.03.2016)}
+\author{}
+\date{}
+
+\newcommand{\olen}{\overline{len}}
+\newcommand{\onum}{\overline{num}}
+\newcommand{\omaxlen}{\overline{maxlen}}
+\newcommand{\osumnum}{\overline{sumnum}}
+\newcommand{\logn}{\log n}
+\newcommand{\Ologn}{O(\logn)}
+
+\begin{document}
+
+\maketitle
+Нам дана последовательность $a[1..n]$.
+Обозначим $len_i$ --- длина НОП префикса $a[1..i]$, $num_i$ --- число таких НОП. 
+$$len_0=0,\ num_0 = 1$$
+$$len_i=1+\max\limits_{\substack{j<i\\ a_j<a_i}}(len_j)$$
+$$num_i\text{ --- число } j<i, \text{ таких что } a_j<a_i \text{ и } len_j+1=len_i$$
+Будем считать $len$ и $num$ используя дерево Фенвика, причём обрабатывать индексы мы будем в порядке возрастания $a_i$. Заведём два массива $maxlen$ и $sumnum$: 
+$$maxlen_i=\max\limits_{f(i) \leq j \leq i}(len_j)$$
+$$sumnum_i=\sum\limits_{\substack{f(i) \leq j \leq i\\ len_j=maxlen_i}}(num_j)$$
+Пересчитывать $maxlen$ и $sumnum$ мы будем следующим образом: пусть у нас обновился $len_i$, тогда для всех $j$, таких что $f(j)\leq i\leq j$ мы инкрементируем $num_j$ если $maxlen_j=len_i$, в противном случае обновляем $maxlen_j$ и присваиваем $numlen_j=1$.
+
+Теперь введём ещё два массива, $\olen_i$ --- длина НОП суффикса $a[i..n]$, $\onum_i$ --- число таких НОП. Считаем их аналогично.
+
+Обозначим за $lcs_i$ число НВП длины $l$ проходящих через $a_i$.
+$$lcs_i=num_i\cdot \sum\limits_{\substack{i<j\\ a_i<a_j\\ len_i+\olen_j=l}}\onum_j$$
+
+Заметим, что для всех $j>i\ len_i+\olen_j\leq l$
+Таким образом, через $a_i$ проходит хотя бы одна НВП $\iff$ $l-len_i=\max\limits_{\substack{i<j\\ a_i<a_j}}(\olen_j)$
+
+Будем считать $lcs$ используя дерево Фенвика. Опять же заведём два массива $\omaxlen$ и $\osumnum$. Обрабатывать индексы мы будем в порядке убывания $a_i$. Итак, обрабатываем индекс $i$. Вначале обновим $\olen_i$ и $\onum_i$, аналогично тому, как мы это делали для $len_i$ и $num_i$. Далее, нас интересует выражение $\sum\limits_{len_i+\olen_j=l}\onum_j$ на суффиксе $a[i+1..n]$. В дереве Фенвика каждый суффикс разбивается на $\Ologn$ непересекающихся отрезков. Пробежимся по этим отрезкам и если $len_i+\omaxlen_j=l$, то прибавим к текущей сумме $\osumnum_j$.
+
+Итак, мы посчитали $lcs_i$, осталось только решить, какие же элементы у нас хорошие. Из предыдущей задачи мы нашли общее число НВП длины $l$, обозначим её $all$. Тогда позиция $i$ --- хорошая $\iff lcs_i=all$.
+
+\end{document}

@@ -1,0 +1,60 @@
+\documentclass[12pt]{article}
+\usepackage{mathtext}
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[russian]{babel}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{enumerate}
+\usepackage{mathtools}
+
+%\newcommand{\Tceil}[1]{T(\ceil{#1})}
+\newcommand{\logn}{\log n}
+\newcommand{\sqrtn}{\sqrt n}
+\newcommand{\logsn}{\log\sqrtn}
+\newcommand{\e}{\log_2 3}
+
+\begin{document}
+	\large
+	%\LARGE
+	%\huge
+	Найдём время работы алгоритма поиска медианы \\
+	при делении элементов на группы по $2k+1$ элементов. \\
+	Оно складывается из:
+	\begin{enumerate}
+		\item
+			Времени нахождения медианы в каждой \\
+			из частей по $(2k+1)$ элементов:
+			$$T_1(n)=\frac{n}{2k+1}(2k+1)^2=\Theta(n)$$
+		\item
+			Времени нахождения медианы медиан:
+			$$T_2(n)=T(\frac{n}{2k+1})$$
+		\item
+			Времени разделение массива на две части:
+			$$T_3(n) = \Theta(n)$$
+		\item
+			Времени рекурсивного вызова от одной из частей.\\
+			Так как медиана медиан не меньше чем как минимум
+			$$\frac{n(k+1)}{2(2k+1)}$$ элементов, 
+			то каждая часть содержит не более чем
+			$$n-\frac{n(k+1)}{2(2k+1)}=\frac{3k+1}{2(2k+1)}n$$ элементов, то есть
+			$$T_4(n)=T(\frac{3k+1}{2(2k+1)}n)$$
+	\end{enumerate}
+	\newpage
+	Таким образом,
+	$$T(n)=T_1(n)+T_2(n)+T_3(n)+T_4(n)$$
+	$$T(n)=T(\frac{n}{2k+1})+T(\frac{3k+1}{2(2k+1)}n)+dn$$
+	Посмотрим, для каких $k$ верно $T(n) = O(n)$\\
+	Для этого должно выполняться
+	$$\begin{cases}
+			T(\frac{n}{2k+1}) \leq c(\frac{n}{2k+1})\\
+			T(\frac{3k+1}{2(2k+1)}n) \leq c(\frac{3k+1}{2(2k+1)}n)\\
+		\end{cases}
+	\implies T(n) \leq cn$$
+	то есть
+	$$c\frac{n}{2k+1}+c\frac{3k+1}{2(2k+1)}n+dn \leq cn$$
+	$$c\frac{(4k+2)-2-(3k+1)}{2(2k+1)} \geq d$$
+	$$c\frac{k-1}{2(2k+1)} \geq d$$
+	Заметим, что при $k > 1$ мы всегда сможем подобрать такое $c$,\\
+	Значит при $k>1$ алгоритм будет работать за линейное время,\\
+	а при $k=1$ не за линейное.
+\end{document}

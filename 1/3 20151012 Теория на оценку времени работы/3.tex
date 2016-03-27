@@ -1,0 +1,61 @@
+\documentclass[12pt]{article}
+\usepackage{mathtext}
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[russian]{babel}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{enumerate}
+\usepackage{mathtools}
+
+\newcommand{\logn}[1][n]{\log #1}
+\newcommand{\logk}[1][k]{\log #1}
+\newcommand{\klogk}[1][k]{#1 \log #1}
+\newcommand{\loglogn}[1][n]{\log\log #1}
+\newcommand{\loglogk}[1][k]{\log\log #1}
+
+\begin{document}
+	\Large
+	%\noindent
+	$а)\ k\logk = \Theta(n)$\\
+	Надо доказать, что $k = \Theta(\frac{n}{logn})$\\
+	По условию существуют такие $a\ и\ b$, что
+	$$an \le \klogk \le bn$$
+	\begin{enumerate}
+	\item
+	Докажем, что $k \le bn$:
+		$$an \le \klogk \le bn$$
+		$$k \le \frac{bn}{\logk} \le bn$$
+	\item
+	Докажем, что $k \ge \frac{an}{2\logn}$:
+		$$an \le \klogk \le k\log bn$$
+		$$k \ge \frac{an}{\log bn}$$
+		Начиная с некоторого $n$
+		$$\log bn \le 2\logn$$
+		$$\frac{1}{\log bn} \ge \frac{1}{2\logn}$$
+		$$k \ge \frac{an}{\log bn} \ge \frac{an}{2\logn}$$
+	\newpage
+	\item
+		Докажем, что $k \le \frac{2bn}{\logn}$:
+		$$k\log\frac{an}{2\logn} \le \klogk \le bn$$
+		$$k \le \frac{bn}{\logn - \log\frac{2\logn}{a}}$$
+		Начиная с некоторого $n$
+		$$\log\frac{2\logn}{a} \le \frac{1}{2}\logn$$
+		$$\logn - \log\frac{2\logn}{a} \ge \logn - \frac{1}{2}\logn$$
+		$$\logn - \log\frac{2\logn}{a} \ge \frac{1}{2}\logn$$
+		$$\frac{1}{\logn - \log\frac{2\logn}{a}} \le \frac{2}{\logn}$$
+		$$k \le \frac{bn}{\logn - \log\frac{2\logn}{a}} \le \frac{2bn}{\logn}$$
+	\end{enumerate}
+	Ткаим образом
+	$$\frac{an}{2\logn} \le k \le \frac{2bn}{\logn}$$
+	то есть существуют такие $c = \frac{a}{2}\ и\ d = 2b$, что
+	$$d\frac{n}{\logn} \le k \le c\frac{n}{\logn}$$
+	Значит
+	$$k = \Theta(\frac{n}{\logn}) \qed$$
+	$б)\ s = n^n$,\\
+	Надо найти такую $f(s)$, что $n = \Theta(f(s))$
+	$$\log s = n\logn \implies n\logn = \Theta(\log s)$$
+	И значит (по пункту а)
+	$$n = \Theta(\frac{\log s}{\log\log s})$$
+	то есть
+	$$f(s) = \frac{\log s}{\log\log s}$$
+\end{document}
