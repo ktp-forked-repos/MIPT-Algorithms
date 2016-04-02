@@ -1,141 +1,107 @@
 #include <bits/stdc++.h>
-#define dbg(x) std::cerr << #x << " = " << (x) << std::endl;
-
-typedef std::vector<size_t> line;
-typedef std::vector<line> table;
-
-size_t lcs(std::string s, std::string t)
-{
-	size_t **dp = new size_t*[s.length() + 1];
-	for (size_t i = 0; i <= s.length(); ++i)
-		dp[i] = new size_t[t.length() + 1];
-	
-	dp[0][0] = 0;
-	for (size_t i = 1; i <= s.length(); ++i)
-		dp[i][0] = 0;
-	for (size_t j = 1; j <= t.length(); ++j)
-		dp[0][j] = 0;
-	
-	for (size_t i = 1; i <= s.length(); ++i)
-		for (size_t j = 1; j <= t.length(); ++j)
-			dp[i][j] = s[i - 1] == t[j - 1] ? (dp[i - 1][j - 1] + 1) : std::max(dp[i - 1][j], dp[i][j - 1]);
-	size_t result = dp[s.length()][t.length()];
-	
-	for (size_t i = 0; i <= s.length(); ++i)
-		delete[] dp[i];
-	delete[] dp;
-	
-	return result;
-}
-
-// result(i, j) = НОП(s[0, i), t[j, t.length()))
-table slow(std::string s, std::string t)
-{
-	table result(s.length() + 1, line(t.length() + 1));
-	for (size_t i = 0; i <= s.length(); ++i)
-		for (size_t j = 0; j <= t.length(); ++j)
-		{
-			std::string sSub = s.substr(0, i);
-			std::string tSub = t.substr(j, t.length() - j);
-			result[i][j] = lcs(sSub, tSub);
-		}
-	return result;
-}
-
-table fast(std::string s, std::string t)
-{
-	table h(s.length() + 1, line(t.length() + 1));
-	table v(s.length() + 1, line(t.length() + 1));
-	//*
-	for (size_t i = 0; i <= s.length(); ++i)
-		v[i][0] = 0;
-	for (size_t j = 0; j <= t.length(); ++j)
-		h[0][j] = j + 1;
-	//*/
-	for (size_t i = 0; i < s.length(); ++i)
-		for (size_t j = 0; j < t.length(); ++j)
-		{
-			bool is = s[i] == t[j];
-			int x = h[i][j];
-			int y = v[i][j];
-			if (x < y)
-			{
-				h[i + 1][j] = is ? x : y;
-				v[i][j + 1] = is ? y : x;
-			}
-			else
-			{
-				h[i + 1][j] = x;
-				v[i][j + 1] = y;
-			}
-		}
-	
-	dbg(h[0][0])
-	dbg(v[0][0])
-	return h;
-	
-	for (size_t i = 0; i <= s.length(); ++i)
-	{
-		for (size_t j = 0; j <= t.length(); ++j)
-			printf("%2d", v[i][j]);
-		printf("\n");
-	}
-	return h;
-	
-	for (size_t i = 0; i <= s.length(); ++i)
-		printf("%d ", v[i][t.length()]);
-	printf("\n");
-}
+#include "base.h"
+#include "slow.h"
+#include "fast.h"
+#include "slowCheck.h"
 
 std::string generateString(size_t n)
 {
-	std::string s(n, '0');
+	std::string s(n, 'a');
 	for (size_t i = 0; i < n; ++i)
-		s[i] = '0' + rand() % 3;
+		s[i] += rand() % 5;
 	return s;
 }
 
 void generate(size_t n = 7, size_t m = 10)
 {
-	freopen("input.txt", "w", stdout);
-	std::cout << generateString(n) << std::endl;
-	std::cout << generateString(m) << std::endl;
-	exit(0);
+	std::ofstream fout("input.txt");
+	fout << generateString(n) << std::endl;
+	fout << generateString(m) << std::endl;
+	fout.close();
 }
 
-void printPoints(table t)
+// возвращает число различающихся ячеек матриц
+size_t diff(table t1, table t2)
 {
-	for (size_t i = 0; i < t.size(); ++i)
+	size_t diff = 0;
+	assert(t1.size() == t2.size());
+	for (size_t i = 0; i < t1.size(); ++i)
 	{
-		for (size_t j = 0; j < t[i].size(); ++j)
-			printf("%2d", t[i][j]);
-		printf("\n");
-		if (i + 1 == t.size())
-			break;
-		printf("%c ", t[i][0] == t[i + 1][0] ? '0' : ' ');
-		for (size_t j = 1; j < t[i].size(); ++j)
-		{
-			bool c = t[i][j] == t[i + 1][j] && t[i][j] == t[i][j - 1] && t[i][j] + 1 == t[i + 1][j - 1];
-			printf("%c ", c ? ('0' + j) : ' ');
-		}
-		printf("\n");
+		assert(t1[i].size() == t2[i].size());
+		for (size_t j = 0; j < t1[i].size(); ++j)
+			diff += t1[i][j] != t2[i][j];
 	}
+	return diff;
+}
+
+const char *spaces = "                    ";
+void test(size_t numberTests = 20, size_t maxLength = 200)
+{
+	printf("Тест корректности\n");
+	srand(time(0));
+	size_t fail = 0;
+	printf("Тестируем программу на %zu тестах...\n", numberTests);
+	for (size_t i = 0; i < numberTests; ++i)
+	{
+		printf("Тест %zu", i);
+		
+		size_t n = rand() % maxLength + 1;
+		size_t m = rand() % maxLength + 1;
+		generate(n, m);
+		
+		freopen("input.txt", "r", stdin);
+		std::string a, b;
+		std::cin >> a >> b;
+		table t1 = lcsSlow(a, b);
+		table t2 = lcsFast(a, b);
+		//assert(t1 == t2);
+		
+		printf("\r%s\r", spaces);
+		if (t1 != t2)
+		{
+			printf("Fail:\n");
+			printf("\ta=%s\n", a.c_str());
+			printf("\tb=%s\n", a.c_str());
+			printf("Таблицы различаются в %zu ячейках\n", diff(t1, t2));
+			return;
+		}
+	}
+	if (fail == 0)
+		printf("Все тесты пройдены!\n");
+}
+
+void testTime(size_t length = 3000)
+{
+	printf("Тест времени работы\n");
+	srand(time(0));
+	generate(length, length);
+	
+	freopen("input.txt", "r", stdin);
+	std::string a, b;
+	std::cin >> a >> b;
+	table t = lcsFast(a, b);
+	printf("lcs строк длины %zu посчитался за %.3f секунд\n", length, clock() / float(CLOCKS_PER_SEC));
 	printf("\n");
-	printf("\n");
+}
+
+void testVisual(size_t n = 7, size_t m = 10)
+{
+	printf("Визуальный тест\n");
+	srand(time(0));
+	generate(n, m);
+	
+	freopen("input.txt", "r", stdin);
+	std::string a, b;
+	std::cin >> a >> b;
+	table t = lcsFast(a, b);
+	printf("lcs строк %s и %s:\n", a.c_str(), b.c_str());
+	print(t);
 }
 
 int main()
 {
-	//generate();
-	freopen("input.txt", "r", stdin);
-	std::string s, t;
-	std::cin >> s >> t;
-	table t1 = slow(s, t);
-	//table t2 = fast(s, t);
-	//assert(t1 == t2);
-	
-	//printPoints(t1);
-	fast(s, t);
-	
+	testVisual();
+	testTime();
+	test();
 	return 0;
 }
