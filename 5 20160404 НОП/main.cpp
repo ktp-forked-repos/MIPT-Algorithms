@@ -35,7 +35,7 @@ size_t diff(table t1, table t2)
 }
 
 const char *spaces = "                    ";
-void test(size_t numberTests = 20, size_t maxLength = 200)
+void test(size_t numberTests = 20, size_t maxLength = 1000)
 {
 	printf("Тест корректности\n");
 	srand(time(0));
@@ -43,7 +43,7 @@ void test(size_t numberTests = 20, size_t maxLength = 200)
 	printf("Тестируем программу на %zu тестах...\n", numberTests);
 	for (size_t i = 0; i < numberTests; ++i)
 	{
-		printf("Тест %zu", i);
+		printf("Тест %zu", i + 1);
 		
 		size_t n = rand() % maxLength + 1;
 		size_t m = rand() % maxLength + 1;
@@ -70,7 +70,7 @@ void test(size_t numberTests = 20, size_t maxLength = 200)
 		printf("Все тесты пройдены!\n");
 }
 
-void testTime(size_t length = 3000)
+void testTime(size_t length = 2000)
 {
 	printf("Тест времени работы\n");
 	srand(time(0));
@@ -103,5 +103,6 @@ int main()
 	testVisual();
 	testTime();
 	test();
+	remove("input.txt");
 	return 0;
 }

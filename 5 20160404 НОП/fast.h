@@ -4,14 +4,16 @@
 // result(i, j) = НОП(a[0, i), b[j, b.length()))
 table lcsFast(const std::string &a, const std::string &b)
 {
-	table h(a.length() + 1, line(b.length(), 0));
-	table v(a.length(), line(b.length() + 1, 0));
-	for (size_t i = 0; i < a.length(); ++i)
+	size_t na = a.length();
+	size_t nb = b.length();
+	table h(na + 1, line(nb, 0));
+	table v(na, line(nb + 1, 0));
+	for (size_t i = 0; i < na; ++i)
 		v[i][0] = 0;
-	for (size_t j = 0; j < b.length(); ++j)
+	for (size_t j = 0; j < nb; ++j)
 		h[0][j] = j + 1;
-	for (size_t i = 0; i < a.length(); ++i)
-		for (size_t j = 0; j < b.length(); ++j)
+	for (size_t i = 0; i < na; ++i)
+		for (size_t j = 0; j < nb; ++j)
 		{
 			bool isDiagonal = a[i] == b[j];
 			int x = v[i][j];
@@ -31,11 +33,11 @@ table lcsFast(const std::string &a, const std::string &b)
 	//assert(v == getRightV(a, b));
 	//assert(h == getRightH(a, b));
 	
-	table ans(a.length() + 1, line(b.length() + 1, 0));
-	for (size_t i = 0; i < a.length(); ++i)
+	table ans(na + 1, line(nb + 1, 0));
+	for (size_t i = 0; i < na; ++i)
 	{
-		size_t critical = v[i][b.length()];
-		for (size_t j = 0; j < b.length(); ++j)
+		size_t critical = v[i][nb];
+		for (size_t j = 0; j < nb; ++j)
 			ans[i + 1][j] = ans[i][j] + (j < critical);
 	}
 	return ans;
