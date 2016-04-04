@@ -12,12 +12,9 @@ std::string generateString(size_t n)
 	return s;
 }
 
-void generate(size_t n = 7, size_t m = 10)
+std::pair<std::string, std::string> generate(size_t n, size_t m)
 {
-	std::ofstream fout("input.txt");
-	fout << generateString(n) << std::endl;
-	fout << generateString(m) << std::endl;
-	fout.close();
+	return {generateString(n), generateString(m)};
 }
 
 // возвращает число различающихся ячеек матриц
@@ -34,24 +31,21 @@ size_t diff(table t1, table t2)
 	return diff;
 }
 
-const char *spaces = "                    ";
-void test(size_t numberTests = 20, size_t maxLength = 1000)
+const char spaces[80] = "                                        ";
+void test(size_t numberTests = 20, size_t maxLength = 2000)
 {
 	printf("Тест корректности\n");
-	srand(time(0));
 	size_t fail = 0;
 	printf("Тестируем программу на %zu тестах...\n", numberTests);
 	for (size_t i = 0; i < numberTests; ++i)
 	{
-		printf("Тест %zu", i + 1);
-		
 		size_t n = rand() % maxLength + 1;
 		size_t m = rand() % maxLength + 1;
-		generate(n, m);
+		printf("Тест %zu (строки длин %zu и %zu)", i + 1, n, m);
+		fflush(stdout);
 		
-		freopen("input.txt", "r", stdin);
-		std::string a, b;
-		std::cin >> a >> b;
+		auto input = generate(n, m);
+		std::string a = input.first, b = input.second;
 		table t1 = lcsSlow(a, b);
 		table t2 = lcsFast(a, b);
 		//assert(t1 == t2);
@@ -70,15 +64,11 @@ void test(size_t numberTests = 20, size_t maxLength = 1000)
 		printf("Все тесты пройдены!\n");
 }
 
-void testTime(size_t length = 2000)
+void testTime(size_t length = 10000)
 {
 	printf("Тест времени работы\n");
-	srand(time(0));
-	generate(length, length);
-	
-	freopen("input.txt", "r", stdin);
-	std::string a, b;
-	std::cin >> a >> b;
+	auto input = generate(length, length);
+	std::string a = input.first, b = input.second;
 	table t = lcsFast(a, b);
 	printf("lcs строк длины %zu посчитался за %.3f секунд\n", length, clock() / float(CLOCKS_PER_SEC));
 	printf("\n");
@@ -87,12 +77,8 @@ void testTime(size_t length = 2000)
 void testVisual(size_t n = 7, size_t m = 10)
 {
 	printf("Визуальный тест\n");
-	srand(time(0));
-	generate(n, m);
-	
-	freopen("input.txt", "r", stdin);
-	std::string a, b;
-	std::cin >> a >> b;
+	auto input = generate(n, m);
+	std::string a = input.first, b = input.second;
 	table t = lcsFast(a, b);
 	printf("lcs строк %s и %s:\n", a.c_str(), b.c_str());
 	print(t);
@@ -100,9 +86,9 @@ void testVisual(size_t n = 7, size_t m = 10)
 
 int main()
 {
+	srand(time(0));
 	testVisual();
 	testTime();
 	test();
-	remove("input.txt");
 	return 0;
 }

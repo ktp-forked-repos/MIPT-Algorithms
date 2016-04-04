@@ -16,7 +16,7 @@ void print(table t)
 	printf("\n");
 }
 
-// печатает критические точки (всей матрицу)
+// печатает критические точки (всей матрицы)
 void printPoints(table t)
 {
 	for (size_t i = 0; i < t.size(); ++i)
