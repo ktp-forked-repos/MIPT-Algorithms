@@ -1,7 +1,20 @@
-#ifndef BASE_H
-#define BASE_H
+//
+// Created by dima on 29.02.16.
+//
 
-#include <bits/stdc++.h>
+#ifndef IDEA_20160229_SPLAY_BASE_H
+#define IDEA_20160229_SPLAY_BASE_H
+
+#include <cstdlib>
+#include <vector>
+#include <utility>
+#include <cassert>
+#include <cstddef>
+
 typedef long long ll;
 
-#endif // BASE_H
+#include <iostream>
+
+#define dbg(x) std::cout << #x << " = " << (x) << std::endl;
+
+#endif //IDEA_20160229_SPLAY_BASE_H

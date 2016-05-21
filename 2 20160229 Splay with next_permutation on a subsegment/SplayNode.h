@@ -1,7 +1,3 @@
-//
-// Created by dima on 29.02.16.
-//
-
 #ifndef IDEA_20160229_SPLAY_SPLAYNODE_H
 #define IDEA_20160229_SPLAY_SPLAYNODE_H
 

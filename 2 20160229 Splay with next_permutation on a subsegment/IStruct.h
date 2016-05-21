@@ -1,6 +1,3 @@
-//
-// Created by dima on 29.02.16.
-//
 
 #ifndef IDEA_20160229_SPLAY_ISTRUCT_H
 #define IDEA_20160229_SPLAY_ISTRUCT_H

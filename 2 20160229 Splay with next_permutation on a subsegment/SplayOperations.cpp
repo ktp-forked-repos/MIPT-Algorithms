@@ -1,7 +1,3 @@
-//
-// Created by dima on 29.02.16.
-//
-
 #ifndef IDEA_20160229_SPLAY_SPLAYOPERATIONS_H
 #define IDEA_20160229_SPLAY_SPLAYOPERATIONS_H
 
@@ -16,8 +12,9 @@ size_t getSize(SplayNode *node) {
 }
 
 void update(SplayNode *node) {
-	if (node != nullptr)
+	if (node != nullptr) {
 		node->update();
+	}
 }
 
 void push(SplayNode *node) {
@@ -26,8 +23,9 @@ void push(SplayNode *node) {
 }
 
 void deAttach(SplayNode *node) {
-	if (node == nullptr || node->parent == nullptr)
+	if (node == nullptr || node->parent == nullptr) {
 		return;
+	}
 	SplayNode *parent = node->parent;
 	assert(!node->needPush);
 	assert(!parent->needPush);
@@ -44,7 +42,7 @@ void rotate(SplayNode *node) {
 	assert(!node->needPush);
 	assert(!parent->needPush);
 	assert(parent2 == nullptr || !parent2->needPush);
-	
+
 	bool isLeft = node->isLeft();
 	bool isParentLeft = parent2 == nullptr ? false : parent->isLeft();
 	deAttach(node);
@@ -54,67 +52,77 @@ void rotate(SplayNode *node) {
 		push(child);
 		deAttach(child);
 	}
-	
+
 	parent->set(child, isLeft);
 	node->set(parent, !isLeft);
-	if (parent2 != nullptr)
+	if (parent2 != nullptr) {
 		parent2->set(node, isParentLeft);
+	}
 }
 
 void splay(SplayNode *node) {
-	assert(!node->needPush);
-	SplayNode *parent = node->parent;
-	if (parent == nullptr)
-		return;
-	assert(!parent->needPush);
-	SplayNode *parent2 = parent->parent;
+	while (1) {
+		assert(!node->needPush);
+		SplayNode *parent = node->parent;
+		if (parent == nullptr) {
+			break;
+		}
+		assert(!parent->needPush);
+		SplayNode *parent2 = parent->parent;
 
-	if (parent2 != nullptr)
-		assert(!parent2->needPush);
+		if (parent2 != nullptr) {
+			assert(!parent2->needPush);
+		}
 
-	if (parent2 == nullptr)
-		// zig
-		rotate(node);
-	else if (node->isLeft() == parent->isLeft()) {
-		// zig-zig
-		rotate(parent);
-		rotate(node);
-		splay(node);
-	}
-	else {
-		// zig-zag
-		rotate(node);
-		rotate(node);
-		splay(node);
+		if (parent2 == nullptr) {
+			// zig
+			rotate(node);
+		}
+		else if (node->isLeft() == parent->isLeft()) {
+			// zig-zig
+			rotate(parent);
+			rotate(node);
+		}
+		else {
+			// zig-zag
+			rotate(node);
+			rotate(node);
+		}
 	}
 }
 
 SplayNode *find(SplayNode *node, size_t i) {
-	if (node == nullptr)
+	if (node == nullptr) {
 		return nullptr;
+	}
 	push(node);
 	size_t sizeLeft = getSize(node->left);
-	if (sizeLeft == i)
+	if (sizeLeft == i) {
+		splay(node);
 		return node;
-	else if (sizeLeft < i)
+	}
+	else if (sizeLeft < i) {
 		return find(node->right, i - sizeLeft - 1);
-	else
+	}
+	else {
 		return find(node->left, i);
+	}
 }
 
 std::pair<SplayNode *, SplayNode *> split(SplayNode *node, size_t size) {
-	if (node == nullptr)
+	if (node == nullptr) {
 		return {nullptr, nullptr};
+	}
 	assert(node->parent == nullptr);
 	push(node);
-	if (size == 0)
+	if (size == 0) {
 		return {nullptr, node};
+	}
 	SplayNode *rootLeft = find(node, size - 1);
-	assert(rootLeft != nullptr);
-	splay(rootLeft);
 	SplayNode *rightChild = rootLeft->right;
-	if (rightChild != nullptr)
+	if (rightChild != nullptr) {
 		rightChild->push();
+	}
 	deAttach(rightChild);
 	assert(getSize(rootLeft) == size);
 	return {rootLeft, rightChild};
@@ -130,12 +138,12 @@ SplayNode *findMax(SplayNode *node) {
 SplayNode *merge(SplayNode *left, SplayNode *right) {
 	assert(left == nullptr || left->parent == nullptr);
 	assert(right == nullptr || right->parent == nullptr);
-	if (left == nullptr || right == nullptr)
+	if (left == nullptr || right == nullptr) {
 		return left == nullptr ? right : left;
+	}
 	push(left);
 	push(right);
 	SplayNode *leftMax = findMax(left);
-	splay(leftMax);
 	leftMax->setRight(right);
 	return leftMax;
 }
@@ -154,6 +162,7 @@ SplayNode *findFirstLarger(SplayNode *node, int value) {
 		}
 	}
 	assert(result != nullptr);
+	splay(result);
 	return result;
 }
 
@@ -177,8 +186,6 @@ SplayNode *nextPermutation(SplayNode *node) {
 	auto p2 = split(p.second, 1);
 	int value1 = p2.first->value;
 	SplayNode *firstLarger = findFirstLarger(p2.second, value1);
-	checkParentsPushing(firstLarger);
-	splay(firstLarger);
 	int value2 = firstLarger->value;
 	firstLarger->setValue(value1);
 	p2.first->setValue(value2);

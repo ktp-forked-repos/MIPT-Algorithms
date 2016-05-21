@@ -4,15 +4,14 @@
 
 #include "AbstractGenerator.h"
 
-AbstractGenerator::AbstractGenerator(size_t n, int rangeMin, int rangeMax) : currentSize(0)
-                                                                             , n(n)
-                                                                             , rangeMin(rangeMin)
-                                                                             , rangeMax(rangeMax) {
+AbstractGenerator::AbstractGenerator(size_t n, int rangeMin, int rangeMax) : currentSize(0), n(n), rangeMin(rangeMin), rangeMax(rangeMax) {
 }
 
 void AbstractGenerator::add(AbstractOperation *operation) {
-	result.push_back(operation);
-	currentSize += operation->getSizeChange();
+	if (result.size() < n) {
+		result.push_back(operation);
+		currentSize += operation->getSizeChange();
+	}
 }
 
 void AbstractGenerator::createRandomLR(size_t &l, size_t &r) {

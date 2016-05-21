@@ -1,7 +1,3 @@
-//
-// Created by dima on 29.02.16.
-//
-
 #include "SplayStruct.h"
 #include "SplayOperations.h"
 
@@ -30,9 +26,6 @@ void SplayStruct::insert(size_t i, int x) {
 
 void SplayStruct::set(size_t i, int x) {
 	SplayNode *node = find(root_, i);
-	assert(node != nullptr);
-	checkParentsPushing(node);
-	splay(node);
 	node->setValue(x);
 	root_ = node;
 }

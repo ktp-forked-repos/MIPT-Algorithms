@@ -1,7 +1,3 @@
-//
-// Created by dima on 01.03.16.
-//
-
 #ifndef IDEA_20160229_SPLAY_TESTS_H
 #define IDEA_20160229_SPLAY_TESTS_H
 
@@ -9,6 +5,7 @@
 #include "VectorStruct.h"
 #include "SplayStruct.h"
 #include "GeneratorRandom.h"
+#include "GeneratorBigJumps.h"
 
 std::vector<ll> perform(IStruct *s, std::vector<AbstractOperation *> &operations) {
 	std::vector<ll> result;
@@ -59,10 +56,12 @@ void runTests(int seed = getSeed()) {
 	printf("Тестируем корректность. Seed: %10d\n", seed);
 	srand(seed);
 
+	//runTest(new GeneratorBigJumps(2e5, -1e7, 1e7), "Большие скачки");
+
 	runTest(new GeneratorRandomDefault(10, 0, 10), "Маленький тест");
 	runTest(new GeneratorRandomDefault(1e3, 0, 1e3), "Средний тест");
 	runTest(new GeneratorRandomDefault(1e3, 0, 10), "Средний тест с повторяющимися значениями");
-
+/*
 	runTest(new GeneratorRandomDefault(1e5, -1e7, 1e7), "Огромный тест");
 	runTest(new GeneratorRandomDefault(1e5, 0, 1e2), "Огромный тест с повторяющимися значениями");
 
@@ -70,7 +69,7 @@ void runTests(int seed = getSeed()) {
 	runTest(new GeneratorRandomNextPermutation(1e5, 0, 1e2), "Приоритет nextPermutation с повторяющимися значениями");
 
 	runTest(new GeneratorRandomAdd(1e5, -1e7, 1e7), "Приоритет add");
-	runTest(new GeneratorRandomAdd(1e5, 0, 1e2), "Приоритет add с повторяющимися значениями");
+	runTest(new GeneratorRandomAdd(1e5, 0, 1e2), "Приоритет add с повторяющимися значениями");*/
 
 	printf("\n");
 	if (numberPass == numberAll)

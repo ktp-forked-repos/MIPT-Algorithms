@@ -1,7 +1,3 @@
-//
-// Created by dima on 29.02.16.
-//
-
 #ifndef IDEA_20160229_SPLAY_GENERATORRANDOM_H
 #define IDEA_20160229_SPLAY_GENERATORRANDOM_H
 
@@ -41,23 +37,28 @@ public:
 			//OperationType type = static_cast<OperationType>(rand() % 5);
 			switch (type) {
 				case INSERT:
-					if (debug) printf("insert\n");
+					if (debug)
+						printf("insert\n");
 					add(new OperationInsert(this));
 					break;
 				case GET_SUM:
-					if (debug) printf("sum\n");
+					if (debug)
+						printf("sum\n");
 					add(new OperationGetSum(this));
 					break;
 				case SET:
-					if (debug) printf("set\n");
+					if (debug)
+						printf("set\n");
 					add(new OperationSet(this));
 					break;
 				case NEXT_PERMUTATION:
-					if (debug) printf("np\n");
+					if (debug)
+						printf("np\n");
 					add(new OperationNextPermutation(this));
 					break;
 				case ADD:
-					if (debug) printf("add\n");
+					if (debug)
+						printf("add\n");
 					add(new OperationAdd(this));
 					break;
 				default:

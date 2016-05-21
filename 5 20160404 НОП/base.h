@@ -1,7 +1,9 @@
 #ifndef BASE_H
 #define BASE_H
 
-typedef std::vector<size_t> line;
+#include <bits/stdc++.h>
+
+typedef std::vector<unsigned int> line;
 typedef std::vector<line> table;
 
 // просто печатает матрицу
@@ -17,12 +19,14 @@ void print(table t)
 }
 
 // печатает критические точки (всей матрицы)
+// приимает таблицу следующего вида: 
+// t[i][j] = НОП(a[0, i), b[j, b.length()))
 void printPoints(table t)
 {
 	for (size_t i = 0; i < t.size(); ++i)
 	{
 		for (size_t j = 0; j < t[i].size(); ++j)
-			printf("%2zu", t[i][j]);
+			printf("%2u", t[i][j]);
 		printf("\n");
 		if (i + 1 == t.size())
 			break;

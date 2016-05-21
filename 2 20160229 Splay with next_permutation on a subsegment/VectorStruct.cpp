@@ -1,7 +1,3 @@
-//
-// Created by dima on 29.02.16.
-//
-
 #include <algorithm>
 #include "VectorStruct.h"
 

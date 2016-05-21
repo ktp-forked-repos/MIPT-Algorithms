@@ -1,8 +1,12 @@
+#ifndef FAST_H
+#define FAST_H
+
 #include "base.h"
+#include "slowCheck.h"
 
 // lcs префикса a и суффикса b, O(n^2)
-// result(i, j) = НОП(a[0, i), b[j, b.length()))
-table lcsFast(const std::string &a, const std::string &b)
+// result[i][j] = НОП(a[i, a.length()), b[0, j))
+table calculateSuffixPrefixLCS(const std::string &b, const std::string &a)
 {
 	size_t na = a.length();
 	size_t nb = b.length();
@@ -40,5 +44,12 @@ table lcsFast(const std::string &a, const std::string &b)
 		for (size_t j = 0; j < nb; ++j)
 			ans[i + 1][j] = ans[i][j] + (j < critical);
 	}
-	return ans;
+	
+	table transpose(nb, line(na));
+	for (size_t i = 0; i < nb; ++i)
+		for (size_t j = 0; j < na; ++j)
+			transpose[i][j] = ans[j + 1][i];
+	return transpose;
 }
+
+#endif

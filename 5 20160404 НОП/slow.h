@@ -1,3 +1,6 @@
+#ifndef SLOW_H
+#define SLOW_H
+
 #include "base.h"
 
 // dp[i][j] = lcs(a[0..i], b[0..j])
@@ -22,38 +25,40 @@ size_t lcs(const std::string &a, const std::string &b)
 }
 
 // lcs префикса a и суффикса b, O(n^4)
-// result(i, j) = НОП(a[0, i), b[j, b.length()))
+// result[i][j] = НОП(a[i, a.length()), b[0, j))
 table lcsVerySlow(const std::string &a, const std::string &b)
 {
 	size_t na = a.length();
 	size_t nb = b.length();
-	table result(na + 1, line(nb + 1));
-	for (size_t i = 0; i <= na; ++i)
-		for (size_t j = 0; j <= nb; ++j)
+	table result(na, line(nb));
+	for (size_t i = 0; i < na; ++i)
+		for (size_t j = 0; j < nb; ++j)
 		{
-			std::string aSub = a.substr(0, i);
-			std::string bSub = b.substr(j, nb - j);
+			std::string aSub = a.substr(i, na - i);
+			std::string bSub = b.substr(0, j + 1);
 			result[i][j] = lcs(aSub, bSub);
 		}
 	return result;
 }
 
 // lcs префикса a и суффикса b, O(n^3)
-// result(i, j) = НОП(a[0, i), b[j, b.length()))
+// result[i][j] = НОП(a[i, a.length()), b[0, j))
 table lcsSlow(const std::string &a, const std::string &b)
 {
 	size_t na = a.length();
 	size_t nb = b.length();
-	table result(na + 1, line(nb + 1));
-	// перебираем префикс второй строки
-	// и ищем lcs этого префикса с каждой из подстрок первой строки
-	for (size_t j = 0; j <= nb; ++j)
+	table result(na, line(nb));
+	// перебираем префикс первой строки
+	// и ищем lcs этого префикса с каждой из подстрок второй строки
+	for (size_t i = 0; i < na; ++i)
 	{
-		std::string bSub = b.substr(j, nb - j);
-		size_t nBSub = nb - j;
-		table dp = getLcsTable(a, bSub);
-		for (size_t i = 0; i <= na; ++i)
-			result[i][j] = dp[i][nBSub];
+		std::string aSub = a.substr(i, na - i);
+		size_t nASub = na - i;
+		table dp = getLcsTable(b, aSub);
+		for (size_t j = 0; j < nb; ++j)
+			result[i][j] = dp[j + 1][nASub];
 	}
 	return result;
 }
+
+#endif

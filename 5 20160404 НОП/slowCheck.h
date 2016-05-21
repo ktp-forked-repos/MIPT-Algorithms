@@ -1,4 +1,8 @@
+#ifndef SLOW_CHECK_H
+#define SLOW_CHECK_H
+
 #include "base.h"
+#include "slow.h"
 
 // Медленная реализация получения таблицы критических моментов для вертикальных рёбер
 table getRightV(const std::string &a, const std::string &b)
@@ -48,3 +52,5 @@ table getRightH(const std::string &a, const std::string &b)
 		}
 	return h;
 }
+
+#endif

@@ -1,8 +1,6 @@
-#include <bits/stdc++.h>
-#include "base.h"
-#include "slow.h"
 #include "fast.h"
-#include "slowCheck.h"
+#include "slow.h"
+#include <bits/stdc++.h>
 
 std::string generateString(size_t n)
 {
@@ -47,7 +45,7 @@ void test(size_t numberTests = 20, size_t maxLength = 2000)
 		auto input = generate(n, m);
 		std::string a = input.first, b = input.second;
 		table t1 = lcsSlow(a, b);
-		table t2 = lcsFast(a, b);
+		table t2 = calculateSuffixPrefixLCS(a, b);
 		//assert(t1 == t2);
 		
 		printf("\r%s\r", spaces);
@@ -69,7 +67,7 @@ void testTime(size_t length = 10000)
 	printf("Тест времени работы\n");
 	auto input = generate(length, length);
 	std::string a = input.first, b = input.second;
-	table t = lcsFast(a, b);
+	table t = calculateSuffixPrefixLCS(a, b);
 	printf("lcs строк длины %zu посчитался за %.3f секунд\n", length, clock() / float(CLOCKS_PER_SEC));
 	printf("\n");
 }
@@ -78,10 +76,13 @@ void testVisual(size_t n = 7, size_t m = 10)
 {
 	printf("Визуальный тест\n");
 	auto input = generate(n, m);
+	input = {"abac", "cbabc"};
 	std::string a = input.first, b = input.second;
-	table t = lcsFast(a, b);
 	printf("lcs строк %s и %s:\n", a.c_str(), b.c_str());
-	print(t);
+	print(calculateSuffixPrefixLCS(a, b));
+	
+	assert(calculateSuffixPrefixLCS(a, b) == lcsSlow(a, b));
+	assert(calculateSuffixPrefixLCS(a, b) == lcsVerySlow(a, b));
 }
 
 int main()
