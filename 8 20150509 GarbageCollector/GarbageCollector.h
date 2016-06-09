@@ -2,18 +2,17 @@
 #define GARBAGECOLLECTOR_GARBAGECOLLECTOR_H
 
 #include "SmartObject.h"
+#include "Segment.h"
 #include <cstddef>
-#include <map>
 #include <set>
 
 class GarbageCollector {
-
 public:
 	static GarbageCollector &getInstance();
 
-	void registerCallOperatorNew(size_t size);
+	void registerCallOperatorNew(void *pointer, size_t size, bool isArray);
 
-	void registerCallOperatorDelete(size_t size);
+	void registerCallOperatorDelete(void *pointer, size_t size);
 
 	void registerCallConstructor(SmartObject *smartObject);
 
@@ -23,7 +22,7 @@ public:
 
 	static bool debug;
 
-	//private:
+private:
 	GarbageCollector() {
 	}
 
@@ -33,12 +32,15 @@ public:
 
 	void dfs(SmartObject *object);
 
-	size_t sumSize = 0;
-	std::set<SmartObject *> allObjects;
-
-	static const size_t MAX_SUM_SIZE = 60000;
+	int sumSize;
+	std::vector<SmartObject *> allObjects;
+	std::vector<SmartObject *> deletedObjects;
+	std::vector<Segment> allSegments;
+	std::vector<Segment> deletedSegments;
 
 	~GarbageCollector();
+
+	static const size_t MAX_SUM_SIZE = 1200000;
 };
 
 #endif //GARBAGECOLLECTOR_GARBAGECOLLECTOR_H

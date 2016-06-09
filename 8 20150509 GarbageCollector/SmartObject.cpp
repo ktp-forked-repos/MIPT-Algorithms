@@ -15,28 +15,36 @@ SmartObject::SmartObject(SmartObject &&other) {
 	constructorCall();
 }
 
-bool SmartObject::isHeap() {
-	return mIsHeap;
-}
-
 void SmartObject::constructorCall() {
-	auto it = segments.upper_bound(this);
-	mIsHeap = it != segments.end() && it->second <= this;
 	if (GarbageCollector::debug)
-		printf("constructor %20p %d\n", this, mIsHeap);
+		printf("constructor %20p\n", this);
 	GarbageCollector::getInstance().registerCallConstructor(this);
 }
 
 void *SmartObject::operator new(size_t size) {
-	GarbageCollector::getInstance().registerCallOperatorNew(size);
 	auto pointer = ::operator new(size);
-	segments[pointer + size] = pointer;
+	//printf("new %p %zu\n", pointer, size);
+	GarbageCollector::getInstance().registerCallOperatorNew(pointer, size, false);
+	return pointer;
+}
+
+void *SmartObject::operator new[](size_t size) {
+	auto pointer = ::operator new[](size);
+	//printf("new[] %p %zu\n", pointer, size);
+	GarbageCollector::getInstance().registerCallOperatorNew(pointer, size, true);
 	return pointer;
 }
 
 void SmartObject::operator delete(void *pointer, size_t size) {
-	GarbageCollector::getInstance().registerCallOperatorDelete(size);
+	//printf("delete %p %zu\n", pointer, size);
+	GarbageCollector::getInstance().registerCallOperatorDelete(pointer, size);
 	::operator delete(pointer);
+}
+
+void SmartObject::operator delete[](void *pointer, size_t size) {
+	//printf("delete[] %p %zu\n", pointer, size);
+	GarbageCollector::getInstance().registerCallOperatorDelete(pointer, size);
+	::operator delete[](pointer);
 }
 
 SmartObject::~SmartObject() {
@@ -44,5 +52,3 @@ SmartObject::~SmartObject() {
 		printf("destructor %21p\n", this);
 	GarbageCollector::getInstance().registerCallDestructor(this);
 }
-
-std::map<void *, void *> SmartObject::segments;
