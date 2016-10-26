@@ -121,5 +121,10 @@ int main() {
 		cout << endl;
 		cout << endl;
 	}
+
+	unique_lock<mutex> l;
+	condition_variable cv;
+	cv.wait(l, [] { return true; });
+
 	return 0;
 }

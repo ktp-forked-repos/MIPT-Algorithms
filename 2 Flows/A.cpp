@@ -1,9 +1,7 @@
 #include <bits/stdc++.h>
 
 #ifdef LOCAL
-
 #include "../headers/debug.h"
-
 #else
 void nop() {}
 #define dbg(...) nop

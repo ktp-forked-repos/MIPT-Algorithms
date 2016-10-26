@@ -25,14 +25,6 @@ struct Edge {
 	}
 };
 
-struct Graph;
-
-bool getLevelGraph(Graph &g, int s, int t);
-
-int dfs(Graph &g, vector<int> &curr, int t, int u, int max_flow);
-
-void createBlockingFlow(Graph &g, int s, int t);
-
 struct Graph {
 	Graph(int n, int m) : n(n), m(m), first(n, -1), present(m * 2, true) {}
 
