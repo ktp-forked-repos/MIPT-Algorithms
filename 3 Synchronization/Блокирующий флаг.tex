@@ -1,0 +1,71 @@
+\documentclass{article}
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[russian]{babel}
+
+\usepackage{listings}
+\usepackage{solarized-light}
+\lstset{language=C++}
+\definecolor{light-gray}{gray}{0.95}
+\newcommand{\code}[1]{\colorbox{light-gray}{\texttt{#1}}}
+
+\begin{document}
+
+\begin{lstlisting}
+class blocking_flag {
+public:
+	blocking_flag() : ready_(false) {}
+
+	void wait() {
+		std::unique_lock<std::mutex> lock(mtx_);
+		while (!ready_.load()) {
+			ready_cond_.wait(lock);
+		}
+	}
+
+	void set() {
+		ready_.store(true);
+		ready_cond_.notify_all();
+	}
+
+private:
+	std::atomic<bool> ready_;
+	std::mutex mtx_;
+	std::condition_variable ready_cond_;
+}
+\end{lstlisting}
+
+Нам нужно оценить корректность этого кода. 
+Покажем что при некотором порядке исполнения инструкций код выполнится некорректно.
+Рассмотрим код из примера:
+
+\begin{lstlisting}
+#include <thread>   
+#include <iostream>   
+
+int main() {
+	blocking_flag f;
+
+	std::thread t(
+			[&f]() {
+				f.wait();
+				std::cout << "ready!" << std::endl;
+			}
+	);
+
+	f.set();
+	t.join();
+
+	return 0;
+}
+\end{lstlisting}
+
+И следующую последовательность инструкций:\\
+1. Главный поток прерывается перед строчкой f.set()\\
+2. Поток t вызывает f.wait(), захватывает mutex, проверяет условие while, заходит в while и прерывается\\
+3. Главный поток вызывает f.set(), выполняет ready\_.store(true) и ready\_cond\_.notify\_all()\\
+4. Поток t выполняет ready\_cond\_.wait(lock) и засыпает, так как notify\_all() был вызван до wait()\\
+5. Главный поток вызывает f.join()\\
+6. Оба потока неограниченно долго находятся в системных вызовах ожидания, которые при нормальных условиях (то есть без spurious wakeup) не могут завершиться.
+
+\end{document}
