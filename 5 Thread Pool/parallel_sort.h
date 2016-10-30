@@ -1,4 +1,4 @@
-//#include "/home/dima/C++/debug.h"
+#include "/home/dima/C++/debug.h"
 
 #include <mutex>
 #include <atomic>
@@ -149,33 +149,59 @@ public:
 	void sort(RandomAccessIterator first, RandomAccessIterator last, Compare comparator) {
 		thread_pool<void> pool(worker_number_);
 		recursion(pool, first, last, comparator);
+//		bfs(pool, first, last, comparator);
 		pool.shutdown();
 	}
 
 private:
+	static const size_t MIN_LENGTH = 100;
+
+//	template<typename RandomAccessIterator, typename Compare>
+//	void bfs(thread_pool<void> &pool, RandomAccessIterator first, RandomAccessIterator last, Compare comparator) {
+//		size_t length = last - first;
+//		if (length <= 100) {
+//			pool.submit([first, last, comparator] { std::sort(first, last, comparator); });
+//		} else {
+//			RandomAccessIterator middle = first + length / 2;
+//			recursion(pool, first, middle, comparator);
+//			recursion(pool, middle, last, comparator);
+//			pool.submit([middle, first, last, comparator, length] {
+//				std::vector<typename std::iterator_traits<RandomAccessIterator>::value_type> buffer(length);
+//				std::merge(first, middle, middle, last, buffer.begin());
+//				std::copy(buffer.begin(), buffer.end(), first);
+//			});
+//		}
+//	}
+
 	template<typename RandomAccessIterator, typename Compare>
-	void recursion(thread_pool<void> &pool, RandomAccessIterator first, RandomAccessIterator last, Compare comparator) {
+	std::future<void> recursion(thread_pool<void> &pool, RandomAccessIterator first, RandomAccessIterator last, Compare comparator) {
 		size_t length = last - first;
 		if (length <= 100) {
-			pool.submit([first, last, comparator] { std::sort(first, last, comparator); });
+			return pool.submit([first, last, comparator] { std::sort(first, last, comparator); });
 		} else {
 			RandomAccessIterator middle = first + length / 2;
-			recursion(pool, first, middle, comparator);
-			recursion(pool, middle, last, comparator);
-			pool.submit([middle, first, last, comparator, length] {
+			std::future<void> left = recursion(pool, first, middle, comparator);
+			std::future<void> right = recursion(pool, middle, last, comparator);
+			// , left = std::move(left), right = std::move(right)
+			auto x = [middle, first, last, comparator, length, right = std::move(right)]() mutable {
+//				left.get();
+//				right.get();
 				std::vector<typename std::iterator_traits<RandomAccessIterator>::value_type> buffer(length);
 				std::merge(first, middle, middle, last, buffer.begin());
 				std::copy(buffer.begin(), buffer.end(), first);
-			});
+			};
+			pool.submit(x);
+//			std::future<void> result = pool.submit(x);
+			return left;
 		}
 	}
 
 	size_t worker_number_;
 };
 
-/*
+//*
 #include <cstdlib>
-#include <stdlib.h>
+//#include <stdlib.h>
 #include <cassert>
 using namespace std;
 
@@ -191,4 +217,4 @@ int main() {
 		assert(a[i - 1] <= a[i]);
 	}
 	return 0;
-}*/
+}//*/
