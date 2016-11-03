@@ -1,14 +1,12 @@
-#include "/home/dima/C++/debug.h"
-
+#include <deque>
 #include <mutex>
 #include <atomic>
 #include <condition_variable>
 #include <future>
 #include <vector>
 #include <algorithm>
-#include <deque>
 
-// Блокирующая очередь (из второй задачи)
+// Блокирующая очередь (из второй задачи), с измененением функции pop
 template<class Value, class Container = std::deque<Value>>
 class thread_safe_queue {
 public:
@@ -26,17 +24,22 @@ public:
 		cv_something_push_.notify_one();
 	}
 
-	void pop(Value &v) {
+	// возвращает true <=> успешно записал значение в v
+	bool pop(Value &v, bool block_if_empty = true) {
 		std::unique_lock<std::mutex> lock(mutex_);
 		while (container_.size() == 0) {
 			if (is_shutdown_) {
 				throw std::logic_error("Call pop on empty queue!");
+			}
+			if (!block_if_empty) {
+				return false;
 			}
 			cv_something_push_.wait(lock);
 		}
 		v = std::move(container_.front());
 		container_.pop_front();
 		cv_something_pop_.notify_one();
+		return true;
 	}
 
 	void shutdown() {
@@ -54,7 +57,7 @@ private:
 	std::condition_variable cv_something_pop_;
 };
 
-// Пул потокв (из первой задачи)
+// Пул потоков (из первой задачи), с добавлением функции wait
 template<class Value>
 class thread_pool {
 public:
@@ -72,6 +75,20 @@ public:
 		std::future<Value> future = task.get_future();
 		queue_.enqueue({false, std::move(task)});
 		return future;
+	}
+
+	// единственная новая функция
+	void wait(std::future<void> future) {
+		while (future.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
+			queue_type pair;
+			bool success = queue_.pop(pair, false);
+			if (!success) {
+				// В очереди нет задач, значит future, которую мы ждём уже кто-то выполняет
+				future.get();
+				return;
+			}
+			pair.second();
+		}
 	}
 
 	void shutdown() {
@@ -110,37 +127,6 @@ private:
 	std::atomic_bool is_shutdown_;
 };
 
-/*template<typename RandomAccessIterator, typename Compare>
-class Sort {
-public:
-	Sort(thread_pool<void> &pool, RandomAccessIterator first, RandomAccessIterator last, Compare comparator) : pool(pool), first(first), last(last), comparator(comparator) {}
-
-	void operator()() {
-		size_t length = last - first;
-		if (length <= 10) {
-			std::sort(first, last, comparator);
-		} else {
-			RandomAccessIterator middle = first + length / 2;
-			pool.submit(Sort<RandomAccessIterator, Compare>(pool, first, middle, comparator));
-			pool.submit(Sort<RandomAccessIterator, Compare>(pool, middle, last, comparator));
-
-			RandomAccessIterator first_for_lambda = first;
-			RandomAccessIterator last_for_lambda = last;
-			pool.submit([length, first_for_lambda, middle, last_for_lambda] {
-				std::vector<typename std::iterator_traits<RandomAccessIterator>::value_type> buffer(length);
-				std::merge(first_for_lambda, middle, middle, last_for_lambda, buffer.begin());
-				std::copy(buffer.begin(), buffer.end(), first_for_lambda);
-			});
-		}
-	}
-
-private:
-	thread_pool<void> &pool;
-	RandomAccessIterator first;
-	RandomAccessIterator last;
-	Compare comparator;
-};*/
-
 class parallel_sort {
 public:
 	parallel_sort(size_t worker_number) : worker_number_(worker_number) {}
@@ -148,73 +134,33 @@ public:
 	template<typename RandomAccessIterator, typename Compare>
 	void sort(RandomAccessIterator first, RandomAccessIterator last, Compare comparator) {
 		thread_pool<void> pool(worker_number_);
-		recursion(pool, first, last, comparator);
-//		bfs(pool, first, last, comparator);
+		std::future<void> main_future = pool.submit(get_lambda(pool, first, last, comparator));
+		main_future.get();
 		pool.shutdown();
 	}
 
 private:
-	static const size_t MIN_LENGTH = 100;
-
-//	template<typename RandomAccessIterator, typename Compare>
-//	void bfs(thread_pool<void> &pool, RandomAccessIterator first, RandomAccessIterator last, Compare comparator) {
-//		size_t length = last - first;
-//		if (length <= 100) {
-//			pool.submit([first, last, comparator] { std::sort(first, last, comparator); });
-//		} else {
-//			RandomAccessIterator middle = first + length / 2;
-//			recursion(pool, first, middle, comparator);
-//			recursion(pool, middle, last, comparator);
-//			pool.submit([middle, first, last, comparator, length] {
-//				std::vector<typename std::iterator_traits<RandomAccessIterator>::value_type> buffer(length);
-//				std::merge(first, middle, middle, last, buffer.begin());
-//				std::copy(buffer.begin(), buffer.end(), first);
-//			});
-//		}
-//	}
+	static const size_t MIN_LENGTH = 2000;
 
 	template<typename RandomAccessIterator, typename Compare>
-	std::future<void> recursion(thread_pool<void> &pool, RandomAccessIterator first, RandomAccessIterator last, Compare comparator) {
-		size_t length = last - first;
-		if (length <= 100) {
-			return pool.submit([first, last, comparator] { std::sort(first, last, comparator); });
+	static std::function<void()> get_lambda(thread_pool<void> &pool, RandomAccessIterator first, RandomAccessIterator last, Compare comparator) {
+		if (last - first <= (int) MIN_LENGTH) {
+			return [first, last, comparator] { std::sort(first, last, comparator); };
 		} else {
-			RandomAccessIterator middle = first + length / 2;
-			std::future<void> left = recursion(pool, first, middle, comparator);
-			std::future<void> right = recursion(pool, middle, last, comparator);
-			// , left = std::move(left), right = std::move(right)
-			auto x = [middle, first, last, comparator, length, right = std::move(right)]() mutable {
-//				left.get();
-//				right.get();
-				std::vector<typename std::iterator_traits<RandomAccessIterator>::value_type> buffer(length);
-				std::merge(first, middle, middle, last, buffer.begin());
+			return [&pool, first, last, comparator] {
+				RandomAccessIterator middle = first + (last - first) / 2;
+				auto left = get_lambda(pool, first, middle, comparator);
+				auto right = get_lambda(pool, middle, last, comparator);
+				std::future<void> future = pool.submit(right);
+				left();
+				pool.wait(std::move(future));
+
+				std::vector<typename std::iterator_traits<RandomAccessIterator>::value_type> buffer(last - first);
+				std::merge(first, middle, middle, last, buffer.begin(), comparator);
 				std::copy(buffer.begin(), buffer.end(), first);
 			};
-			pool.submit(x);
-//			std::future<void> result = pool.submit(x);
-			return left;
 		}
 	}
 
 	size_t worker_number_;
 };
-
-//*
-#include <cstdlib>
-//#include <stdlib.h>
-#include <cassert>
-using namespace std;
-
-int main() {
-	parallel_sort sorter(4);
-	vector<int> a;
-	for (int i = 0; i < 100; ++i) {
-		a.push_back(rand() % 10);
-	}
-	sorter.sort(a.begin(), a.end(), less<int>());
-	dbg(a);
-	for (int i = 1; i < a.size(); ++i) {
-		assert(a[i - 1] <= a[i]);
-	}
-	return 0;
-}//*/
