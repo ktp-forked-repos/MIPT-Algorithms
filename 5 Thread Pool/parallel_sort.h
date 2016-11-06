@@ -140,7 +140,7 @@ public:
 	}
 
 private:
-	static const size_t MIN_LENGTH = 2000;
+	static const size_t MIN_LENGTH = 20;
 
 	template<typename RandomAccessIterator, typename Compare>
 	static std::function<void()> get_lambda(thread_pool<void> &pool, RandomAccessIterator first, RandomAccessIterator last, Compare comparator) {
@@ -152,8 +152,8 @@ private:
 				auto left = get_lambda(pool, first, middle, comparator);
 				auto right = get_lambda(pool, middle, last, comparator);
 				std::future<void> future = pool.submit(right);
-				left();
 				pool.wait(std::move(future));
+				left();
 
 				std::vector<typename std::iterator_traits<RandomAccessIterator>::value_type> buffer(last - first);
 				std::merge(first, middle, middle, last, buffer.begin(), comparator);
