@@ -134,30 +134,34 @@ public:
 	template<typename RandomAccessIterator, typename Compare>
 	void sort(RandomAccessIterator first, RandomAccessIterator last, Compare comparator) {
 		thread_pool<void> pool(worker_number_);
-		std::future<void> main_future = pool.submit(get_lambda(pool, first, last, comparator));
+		std::future<void> main_future = pool.submit(get_lambda(pool, first, 0, last - first, comparator));
 		main_future.get();
 		pool.shutdown();
 	}
 
 private:
-	static const size_t MIN_LENGTH = 20;
+	static const size_t MIN_LENGTH = 1000;
 
 	template<typename RandomAccessIterator, typename Compare>
-	static std::function<void()> get_lambda(thread_pool<void> &pool, RandomAccessIterator first, RandomAccessIterator last, Compare comparator) {
-		if (last - first <= (int) MIN_LENGTH) {
-			return [first, last, comparator] { std::sort(first, last, comparator); };
+	static std::function<void()> get_lambda(thread_pool<void> &pool, RandomAccessIterator &first0, size_t first, size_t last, Compare comparator) {
+		if (last - first <= MIN_LENGTH) {
+			return [&first0, first, last, comparator] { std::sort(first0 + first, first0 + last, comparator); };
 		} else {
-			return [&pool, first, last, comparator] {
-				RandomAccessIterator middle = first + (last - first) / 2;
-				auto left = get_lambda(pool, first, middle, comparator);
-				auto right = get_lambda(pool, middle, last, comparator);
-				std::future<void> future = pool.submit(right);
-				pool.wait(std::move(future));
-				left();
+			return [&pool, &first0, first, last, comparator] {
+				std::vector<size_t> lasts = {last};
+				std::vector<std::future<void>> futures;
+				while (lasts.back() - first > MIN_LENGTH) {
+					lasts.push_back(first + (lasts.back() - first) / 2);
+				}
+				for (size_t i = 1; i < lasts.size(); ++i) {
+					futures.emplace_back(pool.submit(get_lambda(pool, first0, lasts[i], lasts[i - 1], comparator)));
+				}
 
-				std::vector<typename std::iterator_traits<RandomAccessIterator>::value_type> buffer(last - first);
-				std::merge(first, middle, middle, last, buffer.begin(), comparator);
-				std::copy(buffer.begin(), buffer.end(), first);
+				std::sort(first0 + first, first0 + lasts.back(), comparator);
+				for (int i = (int) lasts.size() - 2; i >= 0; --i) {
+					pool.wait(std::move(futures[i]));
+					std::inplace_merge(first0 + first, first0 + lasts[i + 1], first0 + lasts[i], comparator);
+				}
 			};
 		}
 	}
