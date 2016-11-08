@@ -1,12 +1,23 @@
+/*
+#ifdef LOCAL
+#include "debug.h"
+#else
+void nop() {}
+#define msg(...) nop()
+#define dbg(...) nop()
+#define dbgt(...) nop()
+#define dbgl(...) nop()
+#endif
+*/
+bool dont = 0;
+
+
+
 #include <sstream>
 #include <iostream>
 #include <vector>
 #include <cstring>
-
 using namespace std;
-bool dont = 0;
-
-void nop() {}
 
 template<typename Iterator>
 ostream &write(ostream &out, Iterator begin, Iterator end) {
