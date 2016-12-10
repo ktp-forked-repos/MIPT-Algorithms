@@ -44,48 +44,52 @@ template<class T>
 class lock_free_queue {
 public:
     struct Node {
-        T t;
-        Node *next;
-
-        Node(T t, Node *next = nullptr) : t(t), next(next) {}
+        atomic<T *> t;
+        atomic<Node *> next;
     };
 
-    std::atomic<Node *> head = {nullptr};
-    std::atomic<Node *> tail = {nullptr};
-    std::mutex m;
+    atomic<Node *> head = {new Node()};
+    atomic<Node *> tail = {head.load()};
+    mutex m;
 
     void enqueue(T item) {
-        std::lock_guard<std::mutex> lock(m);
-        Node *node = new Node(item);
-        if (tail) {
-            tail.load()->next = node;
-            tail = node;
-        } else {
-            head = node;
-            tail = node;
-        }
+        lock_guard<mutex> lock(m);
+        T *t = new T(item);
+        Node *node = new Node();
+        tail.load()->t = t;
+        tail.load()->next = node;
+        tail = node;
     }
 
     bool dequeue(T &item) {
-        std::lock_guard<std::mutex> lock(m);
-        if (head == nullptr) {
+        lock_guard<mutex> lock(m);
+        if (head == tail) {
             return false;
         }
-        Node *node = head;
-        head = node->next;
-        if (head == nullptr) {
-            tail = nullptr;
-        }
-        item = node->t;
-        delete node;
+        item = *head.load()->t.load();
+        head = head.load()->next;
         return true;
     }
 };
 
 #ifdef LOCAL
+
 int main() {
+    int x;
     lock_free_stack<int> s;
     lock_free_queue<int> q;
+
+    q.enqueue(1);
+    q.enqueue(2);
+
+    assert(q.dequeue(x));
+    assert(x == 1);
+
+    assert(q.dequeue(x));
+    assert(x == 2);
+
+    assert(!q.dequeue(x));
     return 0;
 }
+
 #endif
