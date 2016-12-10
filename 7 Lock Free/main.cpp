@@ -1,5 +1,8 @@
 #include <bits/stdc++.h>
 using namespace std;
+#ifdef LOCAL
+#include "/home/dima/C++/debug.h"
+#endif
 
 // nullptr <- node_1 <- ... <- node_n == head
 template<class T>
@@ -44,51 +47,74 @@ template<class T>
 class lock_free_queue {
 public:
     struct Node {
-        atomic<T *> t;
-        atomic<Node *> next;
+        atomic<T *> t = {nullptr};
+        atomic<Node *> next = {nullptr};
     };
 
     atomic<Node *> head = {new Node()};
     atomic<Node *> tail = {head.load()};
-    mutex m;
 
     void enqueue(T item) {
-        lock_guard<mutex> lock(m);
-        T *t = new T(item);
         Node *node = new Node();
-        tail.load()->t = t;
-        tail.load()->next = node;
+        T *t = new T(item);
+        Node *old_tail = tail;
+        T *old_t = nullptr;
+//        dbg(this_thread::get_id(), node, old_tail, old_tail->t.load());
+        while (!old_tail->t.compare_exchange_weak(old_t, t)) {
+            old_tail = tail;
+            old_t = nullptr;
+        }
+//        dbgt(this_thread::get_id(), node, old_tail, old_tail->t.load());
+        old_tail->next = node;
+        Node *curr_tail = tail;
+        assert(curr_tail == old_tail);
         tail = node;
     }
 
     bool dequeue(T &item) {
-        lock_guard<mutex> lock(m);
-        if (head == tail) {
+        Node *old_head = head;
+        bool success;
+        while ((success = (old_head->next != nullptr)) && !head.compare_exchange_weak(old_head, old_head->next));
+        if (!success) {
             return false;
         }
-        item = *head.load()->t.load();
-        head = head.load()->next;
+        item = *old_head->t;
         return true;
     }
 };
 
 #ifdef LOCAL
 
-int main() {
+int produces = 4;
+int consumers = 4;
+int n = 100000;
+lock_free_queue<int> q;
+
+void produce() {
+    for (int i = 0; i < n; ++i) {
+        q.enqueue(1);
+    }
+}
+
+void consume() {
     int x;
-    lock_free_stack<int> s;
-    lock_free_queue<int> q;
+    for (int i = 0; i < n; ++i) {
+        q.enqueue(x);
+    }
+}
 
-    q.enqueue(1);
-    q.enqueue(2);
+int main() {
+    vector<thread> ts;
+    for (int i = 0; i < produces; ++i) {
+        ts.emplace_back(produce);
+    }
+    for (int i = 0; i < consumers; ++i) {
+        ts.emplace_back(consume);
+    }
 
-    assert(q.dequeue(x));
-    assert(x == 1);
-
-    assert(q.dequeue(x));
-    assert(x == 2);
-
-    assert(!q.dequeue(x));
+    for (thread &t : ts) {
+        t.join();
+    }
     return 0;
 }
 
