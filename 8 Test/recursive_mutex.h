@@ -1,6 +1,6 @@
 #include <bits/stdc++.h>
 
-class recursive_mutex2 {
+class recursive_mutex {
 public:
     void lock() {
         std::unique_lock<std::mutex> lock(m);
