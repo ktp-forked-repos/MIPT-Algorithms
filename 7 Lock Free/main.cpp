@@ -4,7 +4,7 @@ using namespace std;
 #include "/home/dima/C++/debug.h"
 #endif
 
-static const int NUMBER_HAZARD_POINTERS = 100;
+static const int NUMBER_HAZARD_POINTERS = 1000;
 struct hazard_pointer {
     atomic<thread::id> id;
     atomic<void *> pointer = {nullptr};
@@ -63,25 +63,33 @@ public:
     atomic<Node *> toDelete = {nullptr};
 
     void enqueue(T item) {
+        this_thread::yield();
         atomic<void *> &pointer = get_hazard_pointer(0);
         Node *node = new Node();
         T *t = new T(item);
-        dbgl("enqueue", this_thread::get_id(), node, t, head, tail);
-        Node *old_tail = tail;
-        T *old_t = nullptr;
-        while (!old_tail->t.compare_exchange_weak(old_t, t)) {
-            old_tail = tail;
-            old_t = nullptr;
+//        dbgl("enqueue", node, t, head, tail);
+
+        while (true) {
+            Node *old_tail;
+            do {
+                old_tail = tail;
+                pointer = old_tail;
+            } while (tail != old_tail);
+
+            T *old_t = nullptr;
+            if (old_tail->t.compare_exchange_strong(old_t, t)) {
+                old_tail->next = node;
+                Node *curr_tail = tail;
+                assert(curr_tail == old_tail);
+                tail = node;
+                return;
+            }
         }
-        old_tail->next = node;
-        Node *curr_tail = tail;
-        assert(curr_tail == old_tail);
-        tail = node;
-        this_thread::yield();
     }
 
     bool dequeue(T &item) {
-        dbgl("dequeue", this_thread::get_id(), head, tail);
+        this_thread::yield();
+//        dbgl("dequeue", head, tail);
         atomic<void *> &pointer = get_hazard_pointer(1);
         int attempts1 = 0;
         while (true) {
@@ -90,7 +98,7 @@ public:
             int attempts2 = 0;
             do {
                 old_head = head;
-                pointer = (void *) old_head;
+                pointer = old_head;
                 ++attempts2;
             } while (head != old_head);
 
@@ -98,19 +106,17 @@ public:
                 return false;
             }
             if (head.compare_exchange_strong(old_head, old_head->next)) {
-                dbgl("\tdequeue", this_thread::get_id(), old_head, attempts1, attempts2);
-                item = *old_head->t;
-                pointer = nullptr;
+//                dbgl("\tdequeue", old_head, attempts1, attempts2);
+                item = *old_head->t.exchange(nullptr);
                 tryDelete(old_head);
                 tryDeleteOthers();
-//                this_thread::yield();
                 return true;
             }
         }
     }
 
     void deleteNode(Node *node) {
-        dbgl("\t\tdequeue", this_thread::get_id(), node);
+//        dbgl("\t\tdequeue", node);
 //        delete node;
         assert(++node->numberDeleted == 1);
         node->next = nullptr;
@@ -123,13 +129,13 @@ public:
 //            delete node;
             deleteNode(node);
         } else {
-            while (toDelete.compare_exchange_weak(node->nextInToDeleteList, node));
+            while (!toDelete.compare_exchange_weak(node->nextInToDeleteList, node));
         }
     }
 
     bool canDelete(Node *node) {
         for (int i = 0; i < NUMBER_HAZARD_POINTERS; ++i) {
-            if (hazard_pointers[i].pointer == (void *) node) {
+            if (hazard_pointers[i].pointer == node) {
                 return false;
             }
         }
@@ -138,9 +144,9 @@ public:
 
     void tryDeleteOthers() {
         Node *node = toDelete.exchange(nullptr);
-        for (Node *temp = node; temp != nullptr; temp = temp->nextInToDeleteList) {
-            dbgl("\tdequeue", this_thread::get_id(), temp);
-        }
+//        for (Node *temp = node; temp != nullptr; temp = temp->nextInToDeleteList) {
+//            dbgl("\tdequeue", temp);
+//        }
         while (node != nullptr) {
             Node *next = node->nextInToDeleteList;
             tryDelete(node);
@@ -165,9 +171,10 @@ public:
 
 #ifdef LOCAL
 
-int produces = 1;
-int consumers = 2;
-int n = 100000;
+int k = 2;
+int produces = 10;
+int consumers = 10;
+int n = 10000;
 lock_free_queue<int> q;
 
 void produce() {
@@ -184,13 +191,23 @@ void consume() {
 }
 
 int main() {
+//    for (int i = 0; i < 10; ++i) {
+//        thread([i] { dbg(i); }).join();
+//    }
+//    return 0;
+
     vector<thread> ts;
+
     for (int i = 0; i < consumers; ++i) {
         ts.emplace_back(consume);
     }
     for (int i = 0; i < produces; ++i) {
         ts.emplace_back(produce);
     }
+//    for (int i = 0; i < k; ++i) {
+//        ts.emplace_back(consume);
+//        ts.emplace_back(produce);
+//    }
 
     for (thread &t : ts) {
         t.join();
