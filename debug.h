@@ -10,6 +10,7 @@ void nop() {}
 #endif
 */
 bool dont = 0;
+bool multi = 1;
 
 #include <sstream>
 #include <iostream>
@@ -17,6 +18,12 @@ bool dont = 0;
 #include <cstring>
 using namespace std;
 ostream &COUT = cout;
+
+long long gettime() {
+    static chrono::time_point<chrono::high_resolution_clock> t0 = chrono::high_resolution_clock::now();
+    chrono::time_point<chrono::high_resolution_clock> t1 = chrono::high_resolution_clock::now();
+    return chrono::duration_cast<chrono::nanoseconds>(t1 - t0).count();
+}
 
 template<typename Iterator>
 ostream &write(ostream &out, Iterator begin, Iterator end) {
@@ -57,33 +64,29 @@ void myPrint(ostream &out, const char *names, Arg1 &&arg1, Args &&... args) {
     myPrint(out, comma, args...);
 }
 
-#define dbg(...) myPrint(#__VA_ARGS__, __VA_ARGS__)
-
-template<typename... Args>
-void myPrint(const char *names, Args &&... args) {
-#ifdef LOCAL
-    if (dont) return;
-    ostringstream ss;
-    myPrint(ss, names, args...);
-    COUT << ss.str();
-
-    // or for sequential programms
-    // myPrint(COUT, names, args...);
-#endif
-}
-
-#define msg(s) if (!dont) COUT << (s + std::string("\n"))
+#define msg(s) if (!dont) COUT << ((s) + string("\n"))
+#define dbg(...) myPrintLabel("", #__VA_ARGS__, __VA_ARGS__)
 #define dbgt(...) myPrintLabel("\t", #__VA_ARGS__, __VA_ARGS__)
 #define dbgtt(...) myPrintLabel("\t\t", #__VA_ARGS__, __VA_ARGS__)
 #define dbgttt(...) myPrintLabel("\t\t\t", #__VA_ARGS__, __VA_ARGS__)
 #define dbgtttt(...) myPrintLabel("\t\t\t\t", #__VA_ARGS__, __VA_ARGS__)
-#define dbgl(label, ...) myPrintLabel((label + string(": ")), #__VA_ARGS__, __VA_ARGS__)
+#define dbgl(label, ...) myPrintLabel((label) + string(": "), #__VA_ARGS__, __VA_ARGS__)
 #define print_clock() printf("%.3f секунд\n", clock() / (float) CLOCKS_PER_SEC)
+
+string gettimestring() {
+    long long time = gettime();
+    static thread_local char buffer[100];
+    sprintf(buffer, "%3.3f", time / 1e6);
+    return string(buffer);
+}
 
 template<typename... Args>
 void myPrintLabel(string label, const char *names, Args &&... args) {
 #ifdef LOCAL
+    static atomic_int number_threads = {0};
+    static thread_local int number = ++number_threads;
     if (dont) return;
+    if (multi) label = "#" + to_string(number) + " " + gettimestring() + " " + label;
     ostringstream ss;
     myPrint(ss, names, args...);
     COUT << label + ss.str();
