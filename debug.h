@@ -35,7 +35,12 @@ struct getPairType {
 	typedef pair<T1, T2> type;
 };
 
-template<template<typename...> typename C, typename... E, typename enable_if<!is_same<C<E...>, string>::value && !is_same<C<E...>, typename getPairType<E...>::type>::value>::type * = nullptr>
+template<typename T = int, typename ...>
+struct getAtomicType {
+	typedef atomic<T> type;
+};
+
+template<template<typename...> typename C, typename... E, typename enable_if<!is_same<C<E...>, string>::value && !is_same<C<E...>, typename getPairType<E...>::type>::value && !is_same<C<E...>, typename getAtomicType<E...>::type>::value>::type * = nullptr>
 ostream &operator<<(ostream &out, C<E...> c) {
 	return write(out, c.begin(), c.end());
 }
