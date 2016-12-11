@@ -36,9 +36,9 @@ struct hazard_pointer_helper {
     }
 };
 
-atomic<void *> &get_hazard_pointer() {
-    thread_local static hazard_pointer_helper helper;
-    return helper.get();
+atomic<void *> &get_hazard_pointer(int index) {
+    thread_local static hazard_pointer_helper helpers[2];
+    return helpers[index].get();
 }
 
 // Ноды нумеруются в порядке добавления
@@ -49,7 +49,9 @@ class lock_free_queue {
 public:
     struct Node {
         atomic<T *> t = {nullptr};
-        Node *next = {nullptr};
+        atomic<Node *> next = {nullptr};
+        Node *nextInToDeleteList = nullptr;
+        atomic_int numberDeleted = {0};
 
         ~Node() {
             delete t;
@@ -61,8 +63,10 @@ public:
     atomic<Node *> toDelete = {nullptr};
 
     void enqueue(T item) {
+        atomic<void *> &pointer = get_hazard_pointer(0);
         Node *node = new Node();
         T *t = new T(item);
+        dbgl("enqueue", this_thread::get_id(), node, t, head, tail);
         Node *old_tail = tail;
         T *old_t = nullptr;
         while (!old_tail->t.compare_exchange_weak(old_t, t)) {
@@ -73,53 +77,59 @@ public:
         Node *curr_tail = tail;
         assert(curr_tail == old_tail);
         tail = node;
+        this_thread::yield();
     }
 
     bool dequeue(T &item) {
-        Node *old_head = head;
-        bool success;
-        while ((success = (old_head->next != nullptr)) && !head.compare_exchange_weak(old_head, old_head->next));
-        if (!success) {
-            return false;
-        }
-        item = *old_head->t;
-        return true;
-    }
-
-    bool dequeue2(T &item) {
-//        atomic<void *> &pointer = get_hazard_pointer();
+        dbgl("dequeue", this_thread::get_id(), head, tail);
+        atomic<void *> &pointer = get_hazard_pointer(1);
+        int attempts1 = 0;
         while (true) {
-//            Node *old_head;
-//            do {
-//                old_head = head;
-//                pointer = old_head;
-//            } while (head != old_head);
-            Node *old_head = head;
+            ++attempts1;
+            Node *old_head;
+            int attempts2 = 0;
+            do {
+                old_head = head;
+                pointer = (void *) old_head;
+                ++attempts2;
+            } while (head != old_head);
 
             if (old_head->next == nullptr) {
                 return false;
             }
             if (head.compare_exchange_strong(old_head, old_head->next)) {
+                dbgl("\tdequeue", this_thread::get_id(), old_head, attempts1, attempts2);
                 item = *old_head->t;
-//                pointer = nullptr;
-//                tryDelete(old_head);
-//                tryDeleteOthers();
+                pointer = nullptr;
+                tryDelete(old_head);
+                tryDeleteOthers();
+//                this_thread::yield();
                 return true;
             }
         }
     }
 
+    void deleteNode(Node *node) {
+        dbgl("\t\tdequeue", this_thread::get_id(), node);
+//        delete node;
+        assert(++node->numberDeleted == 1);
+        node->next = nullptr;
+        node->t = nullptr;
+        node->nextInToDeleteList = nullptr;
+    }
+
     void tryDelete(Node *node) {
         if (canDelete(node)) {
-            delete node;
+//            delete node;
+            deleteNode(node);
         } else {
-            while (toDelete.compare_exchange_weak(node->next, node));
+            while (toDelete.compare_exchange_weak(node->nextInToDeleteList, node));
         }
     }
 
     bool canDelete(Node *node) {
         for (int i = 0; i < NUMBER_HAZARD_POINTERS; ++i) {
-            if (hazard_pointers[i].pointer == node) {
+            if (hazard_pointers[i].pointer == (void *) node) {
                 return false;
             }
         }
@@ -128,8 +138,11 @@ public:
 
     void tryDeleteOthers() {
         Node *node = toDelete.exchange(nullptr);
+        for (Node *temp = node; temp != nullptr; temp = temp->nextInToDeleteList) {
+            dbgl("\tdequeue", this_thread::get_id(), temp);
+        }
         while (node != nullptr) {
-            Node *next = node->next;
+            Node *next = node->nextInToDeleteList;
             tryDelete(node);
             node = next;
         }
@@ -152,9 +165,9 @@ public:
 
 #ifdef LOCAL
 
-int produces = 10;
-int consumers = 10;
-int n = 10000;
+int produces = 1;
+int consumers = 2;
+int n = 100000;
 lock_free_queue<int> q;
 
 void produce() {
@@ -172,11 +185,11 @@ void consume() {
 
 int main() {
     vector<thread> ts;
-    for (int i = 0; i < produces; ++i) {
-        ts.emplace_back(produce);
-    }
     for (int i = 0; i < consumers; ++i) {
         ts.emplace_back(consume);
+    }
+    for (int i = 0; i < produces; ++i) {
+        ts.emplace_back(produce);
     }
 
     for (thread &t : ts) {
