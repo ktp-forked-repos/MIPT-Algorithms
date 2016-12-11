@@ -20,8 +20,8 @@ using namespace std;
 ostream &COUT = cout;
 
 long long gettime() {
-    static chrono::time_point<chrono::high_resolution_clock> t0 = chrono::high_resolution_clock::now();
-    chrono::time_point<chrono::high_resolution_clock> t1 = chrono::high_resolution_clock::now();
+    static chrono::time_point <chrono::high_resolution_clock> t0 = chrono::high_resolution_clock::now();
+    chrono::time_point <chrono::high_resolution_clock> t1 = chrono::high_resolution_clock::now();
     return chrono::duration_cast<chrono::nanoseconds>(t1 - t0).count();
 }
 
@@ -76,20 +76,30 @@ void myPrint(ostream &out, const char *names, Arg1 &&arg1, Args &&... args) {
 string gettimestring() {
     long long time = gettime();
     static thread_local char buffer[100];
-    sprintf(buffer, "%3.3f", time / 1e6);
+    sprintf(buffer, "%5.1f", time / 1e6);
     return string(buffer);
+}
+
+namespace dbg {
+    atomic_int number_threads = {0};
+    mutex m;
+
+    int getthreadnumber() {
+        lock_guard <mutex> lock(m);
+        ++number_threads;
+        return number_threads;
+    }
 }
 
 template<typename... Args>
 void myPrintLabel(string label, const char *names, Args &&... args) {
 #ifdef LOCAL
-    static atomic_int number_threads = {0};
-    static thread_local int number = ++number_threads;
+    static thread_local int number = dbg::getthreadnumber();
     if (dont) return;
-    if (multi) label = "#" + to_string(number) + " " + gettimestring() + " " + label;
     ostringstream ss;
+    if (multi) ss << "#" << number << " " << gettimestring() << " " << label;
     myPrint(ss, names, args...);
-    COUT << label + ss.str();
+    COUT << ss.str();
 #endif
 }
 
@@ -102,9 +112,9 @@ void test(const T &t, string expected) {
 
 void test() {
     test(vector<int>{1, 2, 3}, "{1, 2, 3}");
-    test(set<int>{1, 2, 3}, "{1, 2, 3}");
-    test(map<int, int>{{1, 10},
-                       {2, 20}}, "{{1, 10}, {2, 20}}");
+    test(set < int > {1, 2, 3}, "{1, 2, 3}");
+    test(map < int, int > {{1, 10},
+                           {2, 20}}, "{{1, 10}, {2, 20}}");
     test(pair<int, int>{1, 2}, "{1, 2}");
     test(string{"abc"}, "abc");
     test("abc", "abc");
