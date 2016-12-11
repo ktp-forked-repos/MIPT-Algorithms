@@ -80,24 +80,18 @@ string gettimestring() {
     return string(buffer);
 }
 
-namespace dbg {
-    atomic_int number_threads = {0};
-    mutex m;
-
-    int getthreadnumber() {
-        lock_guard <mutex> lock(m);
-        ++number_threads;
-        return number_threads;
-    }
+int getthreadnumber() {
+    static atomic_int number_threads = {0};
+    static thread_local int number = ++number_threads;
+    return number;
 }
 
 template<typename... Args>
 void myPrintLabel(string label, const char *names, Args &&... args) {
 #ifdef LOCAL
-    static thread_local int number = dbg::getthreadnumber();
     if (dont) return;
     ostringstream ss;
-    if (multi) ss << "#" << number << " " << gettimestring() << " " << label;
+    if (multi) ss << "#" << getthreadnumber() << " " << gettimestring() << " " << label;
     myPrint(ss, names, args...);
     COUT << ss.str();
 #endif
