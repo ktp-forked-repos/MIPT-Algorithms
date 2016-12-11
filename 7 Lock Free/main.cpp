@@ -4,41 +4,42 @@ using namespace std;
 #include "/home/dima/C++/debug.h"
 #endif
 
-// nullptr <- node_1 <- ... <- node_n == head
-template<class T>
-class lock_free_stack {
-public:
-    struct Node {
-        Node *next;
-        T t;
-
-        Node(Node *next, T t) : next(next), t(t) {}
-    };
-
-    void push(T item) {
-        Node *node = new Node(head, item);
-        while (!head.compare_exchange_weak(node->next, node));
-    }
-
-    bool pop(T &item) {
-//        if (!head)
-//            return false;
-//        Node *node = head;
-//        head = node->next;
-//        return node->t;
-
-        Node *node = head;
-        while (node != nullptr && head.compare_exchange_weak(node, node->next));
-        if (node == nullptr) {
-            return false;
-        } else {
-            item = node->t;
-            return true;
-        }
-    }
-
-    atomic<Node *> head = {nullptr};
+static const int NUMBER_HAZARD_POINTERS = 100;
+struct hazard_pointer {
+    atomic<thread::id> id;
+    atomic<void *> pointer = {nullptr};
 };
+std::array<hazard_pointer, NUMBER_HAZARD_POINTERS> hazard_pointers;
+
+struct hazard_pointer_helper {
+    hazard_pointer *pointer;
+
+    hazard_pointer_helper() {
+        thread::id id = this_thread::get_id();
+        for (int i = 0; i < NUMBER_HAZARD_POINTERS; ++i) {
+            thread::id empty_id;
+            if (hazard_pointers[i].id.compare_exchange_weak(empty_id, id)) {
+                pointer = &hazard_pointers[i];
+                return;
+            }
+        }
+        throw runtime_error("No more hazard pointers available");
+    }
+
+    atomic<void *> &get() {
+        return pointer->pointer;
+    }
+
+    ~hazard_pointer_helper() {
+        pointer->pointer = nullptr;
+        pointer->id = thread::id();
+    }
+};
+
+atomic<void *> &get_hazard_pointer() {
+    thread_local static hazard_pointer_helper helper;
+    return helper.get();
+}
 
 // Ноды нумеруются в порядке добавления
 // tail --- отдельный node
@@ -48,16 +49,16 @@ class lock_free_queue {
 public:
     struct Node {
         atomic<T *> t = {nullptr};
-        atomic<Node *> next = {nullptr};
-//        Node *next = nullptr;
+        Node *next = {nullptr};
+
+        ~Node() {
+            delete t;
+        }
     };
 
     atomic<Node *> head = {new Node()};
     atomic<Node *> tail = {head.load()};
-
-    // nodesToDelete = node_1 -> ... -> node_n -> nullptr
-    atomic<Node *> nodesToDelete = {nullptr};
-    atomic_int threadsInDequeue = {0};
+    atomic<Node *> toDelete = {nullptr};
 
     void enqueue(T item) {
         Node *node = new Node();
@@ -75,7 +76,6 @@ public:
     }
 
     bool dequeue(T &item) {
-        ++threadsInDequeue;
         Node *old_head = head;
         bool success;
         while ((success = (old_head->next != nullptr)) && !head.compare_exchange_weak(old_head, old_head->next));
@@ -83,55 +83,78 @@ public:
             return false;
         }
         item = *old_head->t;
-        tryDelete(old_head);
-        --threadsInDequeue;
         return true;
     }
 
-    void tryDelete(Node *node) {
-        if (threadsInDequeue == 1) {
-            Node *nodesToDelete = this->nodesToDelete.exchange(nullptr);
-            if (threadsInDequeue == 1) {
-                deleteNodes(nodesToDelete);
-            } else {
-                addNodesToDelete(nodesToDelete);
+    bool dequeue2(T &item) {
+//        atomic<void *> &pointer = get_hazard_pointer();
+        while (true) {
+//            Node *old_head;
+//            do {
+//                old_head = head;
+//                pointer = old_head;
+//            } while (head != old_head);
+            Node *old_head = head;
+
+            if (old_head->next == nullptr) {
+                return false;
             }
+            if (head.compare_exchange_strong(old_head, old_head->next)) {
+                item = *old_head->t;
+//                pointer = nullptr;
+//                tryDelete(old_head);
+//                tryDeleteOthers();
+                return true;
+            }
+        }
+    }
+
+    void tryDelete(Node *node) {
+        if (canDelete(node)) {
             delete node;
         } else {
-            addNodesToDelete(node);
+            while (toDelete.compare_exchange_weak(node->next, node));
         }
     }
 
-    void addNodesToDelete(Node *nodes) {
-        Node *last = nodes;
-        while (last->next != nullptr) {
-            last = last->next;
+    bool canDelete(Node *node) {
+        for (int i = 0; i < NUMBER_HAZARD_POINTERS; ++i) {
+            if (hazard_pointers[i].pointer == node) {
+                return false;
+            }
         }
-        while (nodesToDelete.compare_exchange_weak(last->next, nodes));
+        return true;
     }
 
-    void deleteNodes(Node *nodesToDelete) {
-        while (nodesToDelete != nullptr) {
-            Node *next = nodesToDelete->next;
-            delete nodesToDelete;
-            nodesToDelete = next;
+    void tryDeleteOthers() {
+        Node *node = toDelete.exchange(nullptr);
+        while (node != nullptr) {
+            Node *next = node->next;
+            tryDelete(node);
+            node = next;
         }
     }
 
-    ~lock_free_queue() {
-        T t;
-        while (dequeue(t));
-        assert(head == tail);
-//        delete head;
-        deleteNodes(nodesToDelete);
-    }
+//    ~lock_free_queue() {
+//        T t;
+//        while (dequeue(t));
+//        assert(head == tail);
+//
+//        for (int i = 0; i < NUMBER_HAZARD_POINTERS; ++i) {
+//            hazard_pointers[i].pointer = nullptr;
+//            hazard_pointers[i].id = thread::id();
+//        }
+//        tryDeleteOthers();
+//
+//        delete tail;
+//    }
 };
 
 #ifdef LOCAL
 
-int produces = 1;
-int consumers = 1;
-int n = 10;
+int produces = 10;
+int consumers = 10;
+int n = 10000;
 lock_free_queue<int> q;
 
 void produce() {
