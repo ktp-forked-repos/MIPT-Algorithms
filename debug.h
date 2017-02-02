@@ -11,6 +11,7 @@ void nop() {}
 */
 bool dont = 0;
 bool multi = 1;
+bool print_time = 1;
 
 #include <sstream>
 #include <iostream>
@@ -19,9 +20,19 @@ bool multi = 1;
 using namespace std;
 ostream &COUT = cout;
 
+struct TimePrinter {
+    ~TimePrinter() {
+        if (print_time) {
+            fprintf(stderr, "%.3f seconds\n", clock() / (float) CLOCKS_PER_SEC);
+        }
+    }
+};
+
+TimePrinter tp;
+
 long long gettime() {
-    static chrono::time_point <chrono::high_resolution_clock> t0 = chrono::high_resolution_clock::now();
-    chrono::time_point <chrono::high_resolution_clock> t1 = chrono::high_resolution_clock::now();
+    static chrono::time_point<chrono::high_resolution_clock> t0 = chrono::high_resolution_clock::now();
+    chrono::time_point<chrono::high_resolution_clock> t1 = chrono::high_resolution_clock::now();
     return chrono::duration_cast<chrono::nanoseconds>(t1 - t0).count();
 }
 
@@ -106,9 +117,9 @@ void test(const T &t, string expected) {
 
 void test() {
     test(vector<int>{1, 2, 3}, "{1, 2, 3}");
-    test(set < int > {1, 2, 3}, "{1, 2, 3}");
-    test(map < int, int > {{1, 10},
-                           {2, 20}}, "{{1, 10}, {2, 20}}");
+    test(set<int> {1, 2, 3}, "{1, 2, 3}");
+    test(map<int, int> {{1, 10},
+                        {2, 20}}, "{{1, 10}, {2, 20}}");
     test(pair<int, int>{1, 2}, "{1, 2}");
     test(string{"abc"}, "abc");
     test("abc", "abc");
