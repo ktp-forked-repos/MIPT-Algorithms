@@ -10,7 +10,7 @@ void nop() {}
 #endif
 */
 bool dont = 0;
-bool multi = 1;
+bool multi = 0;
 bool print_time = 1;
 
 #include <sstream>
