@@ -13,10 +13,7 @@ bool dont = 0;
 bool multi = 0;
 bool print_time = 1;
 
-#include <sstream>
-#include <iostream>
-#include <vector>
-#include <cstring>
+#include <bits/stdc++.h>
 using namespace std;
 ostream &COUT = cout;
 
@@ -102,6 +99,7 @@ void myPrintLabel(string label, const char *names, Args &&... args) {
 #ifdef LOCAL
     if (dont) return;
     ostringstream ss;
+    ss << label;
     if (multi) ss << "#" << getthreadnumber() << " " << gettimestring() << " " << label;
     myPrint(ss, names, args...);
     COUT << ss.str();
