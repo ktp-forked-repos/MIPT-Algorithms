@@ -6,6 +6,7 @@ using namespace std;
 #include "matrix.h"
 #include "objects.h"
 #include "light.h"
+#include "random.h"
 
 struct Viewport {
 	Point origin;
@@ -23,33 +24,17 @@ struct Viewport {
 	}
 };
 
-Point randomPoint() {
-	return {rand() % w, rand() % h, -rand() % 200 - 100};
-}
+struct Intersect {
+	bool is;
+	Object *object;
+	Point point;
 
-vector<Point> randomPoints(size_t n) {
-	vector<Point> points;
-	for (int i = 0; i < n; ++i) {
-		points.push_back(randomPoint());
-	}
-	return points;
-}
+	Intersect(bool is, Object *object, const Point &point) : is(is), object(object), point(point) {}
 
-vector<Sphere> generateRandomSpheres(size_t n = 3) {
-	vector<Sphere> spheres;
-	for (int i = 0; i < n; ++i) {
-		spheres.push_back({randomPoint(), rand() % 70 + 20, cyanMaterial});
+	operator bool() const {
+		return is;
 	}
-	return spheres;
-}
-
-vector<Triangle> generateRandomTriangles(size_t n = 3) {
-	vector<Triangle> triangle;
-	for (int i = 0; i < n; ++i) {
-		triangle.push_back({randomPoints(3), cyanMaterial});
-	}
-	return triangle;
-}
+};
 
 struct RayTracing {
 	Viewport viewport;
@@ -81,15 +66,11 @@ struct RayTracing {
 		};
 	}
 
-	void createObjects() const {
+	void createObjects() {
 		vector<Sphere> spheres = generateRandomSpheres();
 		vector<Triangle> triangles = generateRandomTriangles();
-		for (Sphere &sphere : spheres) {
-			objects.push_back(&sphere);
-		}
-		for (Triangle &triangle : triangles) {
-			objects.push_back(&triangle);
-		}
+		for_each(spheres.begin(), spheres.end(), [this](Sphere &sphere) { objects.push_back(new Sphere(sphere)); });
+		for_each(triangles.begin(), triangles.end(), [this](Triangle &triangle) { objects.push_back(new Triangle(triangle)); });
 	}
 
 	void createLights() {
@@ -97,8 +78,15 @@ struct RayTracing {
 		lights = {{w / 2, h / 2, 0, 1}};
 	}
 
-	Color getPixelColor(Point pixel) {
-		Ray ray = {viewport.origin, pixel - viewport.origin};
+	Color getPixelColor(Point pixel) const {
+		Intersect intersect = getIntersect({viewport.origin, pixel - viewport.origin});
+		if (!intersect) {
+			return {1, 1, 1};
+		}
+		return intersect.object->material.color;
+	}
+
+	Intersect getIntersect(const Ray &ray) const {
 		auto comparator = [&ray](Object *o1, Object *o2) {
 			auto p1 = o1->intersect(ray);
 			auto p2 = o2->intersect(ray);
@@ -113,10 +101,7 @@ struct RayTracing {
 		Object *object = *min_element(objects.begin(), objects.end(), comparator);
 		auto p = object->intersect(ray);
 		assert(p.second >= 0);
-		if (!p.first) {
-			return {1, 1, 1};
-		}
-		return object->material.color;
+		return {p.first, object, ray.pointAt(p.second)};
 	}
 };
 

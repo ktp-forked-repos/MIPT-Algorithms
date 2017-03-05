@@ -60,6 +60,10 @@ struct Ray {
 	Point a;
 
 	Ray(const Point &p, const Point &a) : p(p), a(a) {}
+
+	Point pointAt(float t) const {
+		return p + a * t;
+	}
 };
 
 ostream &operator<<(ostream &out, Point point) {

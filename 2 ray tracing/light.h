@@ -9,6 +9,8 @@ struct ReferenceLight {
 	float power;
 	float distance;
 
+	ReferenceLight() {}
+
 	ReferenceLight(float power, float distance) : power(power), distance(distance) {}
 };
 
