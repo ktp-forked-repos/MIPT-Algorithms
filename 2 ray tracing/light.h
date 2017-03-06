@@ -6,20 +6,18 @@ using namespace std;
 #include "geometry.h"
 
 struct ReferenceLight {
-	float power;
-	float distance;
+	double power;
+	double distance;
 
 	ReferenceLight() {}
 
-	ReferenceLight(float power, float distance) : power(power), distance(distance) {}
+	ReferenceLight(double power, double distance) : power(power), distance(distance) {}
 };
 
 struct LightPoint : public Point {
-	float power;
+	double power;
 
-	LightPoint(float x, float y, float z, float power) : Point(x, y, z), power(power) {}
-
-	LightPoint(Point point, float power) : Point(point), power(power) {}
+	LightPoint(Point point, double power) : Point(point), power(power) {}
 };
 
 #endif //RAY_TRACING_LIGHT_H

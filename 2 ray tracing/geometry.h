@@ -3,16 +3,18 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-const float eps = 1e-6;
+const double eps = 1e-6;
 
 struct Point {
-	float x;
-	float y;
-	float z;
+	double x;
+	double y;
+	double z;
 
 	Point() {}
 
-	Point(float x, float y, float z) : x(x), y(y), z(z) {}
+	Point(int x, int y, int z) : x(x), y(y), z(z) {}
+
+	Point(double x, double y, double z) : x(x), y(y), z(z) {}
 
 	Point operator+(const Point &point) const {
 		return {x + point.x, y + point.y, z + point.z};
@@ -22,15 +24,15 @@ struct Point {
 		return {x - point.x, y - point.y, z - point.z};
 	}
 
-	Point operator*(float f) const {
+	Point operator*(double f) const {
 		return {x * f, y * f, z * f};
 	}
 
-	Point operator/(float f) const {
+	Point operator/(double f) const {
 		return {x / f, y / f, z / f};
 	}
 
-	float operator^(const Point &p) const {
+	double operator^(const Point &p) const {
 		return x * p.x + y * p.y + z * p.z;
 	}
 
@@ -43,15 +45,28 @@ struct Point {
 		        x * p.y - y * p.x};
 	}
 
-	float length() const {
+	double length() const {
 		return sqrt(x * x + y * y + z * z);
 	}
 
-	float squareLength() const {
+	double squareLength() const {
 		return x * x + y * y + z * z;
 	}
 };
 
+bool equals(Point p, Point q, double epsToUse = eps) {
+	return (p - q).length() < epsToUse;
+}
+
+double cos(Point p, Point q) {
+	return (p ^ q) / p.length() / q.length();
+}
+
+double sqr(double x) {
+	return x * x;
+}
+
+// Луч
 // r = p + t * a
 struct Ray {
 //	точка на прямой
@@ -59,9 +74,9 @@ struct Ray {
 //	направляющий вектор
 	Point a;
 
-	Ray(const Point &p, const Point &a) : p(p), a(a) {}
+	Ray(const Point &p1, const Point &p2) : p(p1), a(p2 - p1) {}
 
-	Point pointAt(float t) const {
+	Point pointAt(double t) const {
 		return p + a * t;
 	}
 };

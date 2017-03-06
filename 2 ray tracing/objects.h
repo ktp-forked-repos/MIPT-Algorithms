@@ -11,31 +11,43 @@ struct Object {
 
 	Object(const Material &material) : material(material) {}
 
-	virtual pair<bool, float> intersect(Ray ray)=0;
+	virtual pair<bool, double> intersect(Ray ray) const = 0;
+
+	virtual double getCos(Point point, Point v) const = 0;
+
+	virtual bool containsPoint(Point point) const = 0;
 
 	virtual ~Object() {}
 };
 
 struct Sphere : public Object {
 	Point center;
-	float radius;
+	double radius;
 
-	Sphere(const Point &center, float radius, const Material &material = cyanMaterial) : Object(material), center(center), radius(radius) {}
+	Sphere(const Point &center, double radius, const Material &material = cyanMaterial) : Object(material), center(center), radius(radius) {}
 
-	pair<bool, float> intersect(Ray ray) override {
-		float a = ray.a.squareLength();
-		float b = (ray.p - center) ^ray.a;
-		float c = (ray.p - center).squareLength() - radius * radius;
-		float d = b * b - a * c;
+	pair<bool, double> intersect(Ray ray) const override {
+		double a = ray.a.squareLength();
+		double b = (ray.p - center) ^ray.a;
+		double c = (ray.p - center).squareLength() - radius * radius;
+		double d = b * b - a * c;
 		if (d < 0) {
 			return {false, 0};
 		}
 
-		float t = (-b - sqrt(d)) / a;
+		double t = (-b - sqrt(d)) / a;
 		if (t < 0) {
 			return {false, 0};
 		}
 		return {true, t};
+	}
+
+	double getCos(Point point, Point vector) const override {
+		return cos(point - center, vector);
+	}
+
+	bool containsPoint(Point point) const override {
+		return abs((point - center).length() - radius) < eps;
 	}
 };
 
@@ -50,17 +62,17 @@ struct Triangle : public Object {
 		assert(points.size() == 3);
 	}
 
-	pair<bool, float> intersect(Ray ray) override {
+	pair<bool, double> intersect(Ray ray) const override {
 		Point ab = b - a;
 		Point ac = c - a;
 		Point n = ab * ac;
-		float d = -(n ^ a);
+		double d = -(n ^ a);
 
 		if (abs(n ^ ray.a) < eps) {
 			return {false, 0};
 		}
 
-		float t = -(d + (n ^ ray.p)) / (n ^ ray.a);
+		double t = -(d + (n ^ ray.p)) / (n ^ ray.a);
 		Point p = ray.p + ray.a * t;
 		if (!isPointInside(p) || t < 0) {
 			return {false, 0};

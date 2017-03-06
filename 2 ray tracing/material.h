@@ -8,9 +8,9 @@ using namespace std;
 struct Material {
 	string name;
 	Color color;
-	float alpha;
-	float reflect;
-	float refract;
+	double alpha;
+	double reflect;
+	double refract;
 };
 
 Material cyanMaterial = {"cyan", {0, 1, 1}, 0, 0, 0};

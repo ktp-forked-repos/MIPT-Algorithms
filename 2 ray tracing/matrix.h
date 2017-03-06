@@ -5,11 +5,15 @@
 using namespace std;
 
 struct Color {
-	float r;
-	float g;
-	float b;
+	double r;
+	double g;
+	double b;
 
-	Color(float r, float g, float b) : r(r), g(g), b(b) {}
+	Color(double r, double g, double b) : r(r), g(g), b(b) {}
+
+	Color operator*(double k) const {
+		return Color(r * k, g * k, b * k);
+	}
 };
 
 typedef vector<vector<Color>> Matrix;

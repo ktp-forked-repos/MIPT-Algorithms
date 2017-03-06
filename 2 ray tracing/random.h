@@ -6,8 +6,17 @@ using namespace std;
 #include "geometry.h"
 #include "objects.h"
 
+// [a, b]
+double randf(double a, double b) {
+	assert(a <= b);
+	static random_device rd;
+	static default_random_engine engine(rd());
+	uniform_real_distribution<double> distribution(a, b);
+	return distribution(engine);
+}
+
 Point randomPoint() {
-	return {rand() % w, rand() % h, -rand() % 200 - 100};
+	return {randf(0, w), randf(0, h), randf(-300, -100)};
 }
 
 vector<Point> randomPoints(size_t n) {
@@ -18,18 +27,18 @@ vector<Point> randomPoints(size_t n) {
 	return points;
 }
 
-vector<Sphere> generateRandomSpheres(size_t n = 3) {
+vector<Sphere> generateRandomSpheres(size_t n = 10) {
 	vector<Sphere> spheres;
 	for (int i = 0; i < n; ++i) {
-		spheres.push_back({randomPoint(), rand() % 70 + 20, cyanMaterial});
+		spheres.push_back({randomPoint(), randf(20, 100), cyanMaterial});
 	}
 	return spheres;
 }
 
-vector<Triangle> generateRandomTriangles(size_t n = 3) {
+vector<Triangle> generateRandomTriangles(size_t n = 10) {
 	vector<Triangle> triangle;
 	for (int i = 0; i < n; ++i) {
-		triangle.push_back({randomPoints(3), cyanMaterial});
+//		triangle.push_back({randomPoints(3), cyanMaterial});
 	}
 	return triangle;
 }

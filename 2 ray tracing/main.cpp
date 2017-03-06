@@ -4,13 +4,13 @@ using namespace std;
 
 int w = 800;
 int h = w;
-#include "/home/dima/C++/debug.h"
+#include "debug.h"
 #include "glut.h"
 #include "ray_tracing.h"
 
 Matrix matrix;
 
-void glPoint(int x, int y, float r, float g, float b) {
+void glPoint(int x, int y, double r, double g, double b) {
 	glColor3f(r, g, b);
 	glVertex2i(x + 1, y);
 }
@@ -31,7 +31,8 @@ void display() {
 }
 
 int main() {
-	srand(time(nullptr));
+//	srand(time(nullptr));
+	srand(0);
 	RayTracing rt;
 	matrix = rt.getMatrix();
 	Glut glut(w, h, display);
