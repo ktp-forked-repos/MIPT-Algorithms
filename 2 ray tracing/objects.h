@@ -6,16 +6,38 @@ using namespace std;
 #include "geometry.h"
 #include "material.h"
 
+class Object;
+
+struct Intersect {
+	bool is;
+	Object *object;
+
+	double t;
+	Point point;
+
+	Intersect(bool is) : is(is), object(nullptr) {}
+
+	Intersect(bool is, Object *object, double t, const Point &point) : is(is), object(object), t(t), point(point) {}
+
+	operator bool() const {
+		return is;
+	}
+};
+
 struct Object {
 	Material material;
 
 	Object(const Material &material) : material(material) {}
 
-	virtual pair<bool, double> intersect(Ray ray) const = 0;
+	virtual Intersect intersect(Ray ray) = 0;
 
 	virtual double getCos(Point point, Point v) const = 0;
 
 	virtual bool containsPoint(Point point) const = 0;
+
+	Intersect makeIntersect(const Ray &ray, double t) {
+		return {true, this, t, ray.pointAt(t)};
+	}
 
 	virtual ~Object() {}
 };
@@ -26,20 +48,22 @@ struct Sphere : public Object {
 
 	Sphere(const Point &center, double radius, const Material &material = cyanMaterial) : Object(material), center(center), radius(radius) {}
 
-	pair<bool, double> intersect(Ray ray) const override {
+	Intersect intersect(Ray ray) override {
 		double a = ray.a.squareLength();
 		double b = (ray.p - center) ^ray.a;
 		double c = (ray.p - center).squareLength() - radius * radius;
 		double d = b * b - a * c;
 		if (d < 0) {
-			return {false, 0};
+			return {false};
 		}
 
-		double t = (-b - sqrt(d)) / a;
-		if (t < 0) {
-			return {false, 0};
+		double t1 = (-b - sqrt(d)) / a;
+		double t2 = (-b + sqrt(d)) / a;
+		if (t1 < 0) {
+			assert(t2 < 0);  // нет объектов внутри сферы
+			return {false};
 		}
-		return {true, t};
+		return makeIntersect(ray, t1);
 	}
 
 	double getCos(Point point, Point vector) const override {
@@ -62,22 +86,22 @@ struct Triangle : public Object {
 		assert(points.size() == 3);
 	}
 
-	pair<bool, double> intersect(Ray ray) const override {
+	Intersect intersect(Ray ray) override {
 		Point ab = b - a;
 		Point ac = c - a;
 		Point n = ab * ac;
 		double d = -(n ^ a);
 
 		if (abs(n ^ ray.a) < eps) {
-			return {false, 0};
+			return {false};
 		}
 
 		double t = -(d + (n ^ ray.p)) / (n ^ ray.a);
 		Point p = ray.p + ray.a * t;
 		if (!isPointInside(p) || t < 0) {
-			return {false, 0};
+			return {false};
 		}
-		return {true, t};
+		return makeIntersect(ray, t);
 	}
 
 	bool isPointInside(Point p) const {

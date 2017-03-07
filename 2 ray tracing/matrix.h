@@ -9,6 +9,8 @@ struct Color {
 	double g;
 	double b;
 
+	Color() {}
+
 	Color(double r, double g, double b) : r(r), g(g), b(b) {}
 
 	Color operator*(double k) const {
@@ -28,7 +30,7 @@ ostream &operator<<(ostream &out, Color color) {
 Matrix createMatrix(int h, int w) {
 	Matrix matrix(h);
 	for (int i = 0; i < h; ++i) {
-		matrix[i].resize(w, white);
+		matrix[i].resize(w);
 	}
 	return matrix;
 }

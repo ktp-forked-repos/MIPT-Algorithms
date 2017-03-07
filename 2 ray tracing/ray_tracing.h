@@ -25,20 +25,6 @@ struct Viewport {
 	}
 };
 
-struct Intersect {
-	bool is;
-	Object *object;
-	Point point;
-
-	Intersect(bool is) : is(is), object(nullptr) {}
-
-	Intersect(bool is, Object *object, const Point &point) : is(is), object(object), point(point) {}
-
-	operator bool() const {
-		return is;
-	}
-};
-
 ostream &operator<<(ostream &out, Intersect intersect) {
 	return printObject(out, "is", intersect.is, "object", intersect.object, "point", intersect.point);
 }
@@ -48,6 +34,7 @@ struct RayTracing {
 	vector<Object *> objects;
 	ReferenceLight referenceLight;
 	vector<LightPoint> lights;
+	/*static */const Color BACKGROUND = {1, 1, 1};
 
 	Matrix getMatrix() {
 		Matrix matrix = createMatrix(h, w);
@@ -65,7 +52,8 @@ struct RayTracing {
 
 	void createViewport() {
 		viewport = {
-				{w / 2, h / 2, 200},
+				{w / 2, h / 2, 100},
+//				{0, 0, 200},
 				{0,     h,     0},
 				{0,     0,     0},
 				{w,     h,     0},
@@ -75,6 +63,7 @@ struct RayTracing {
 
 	void createObjects() {
 		vector<Sphere> spheres = generateRandomSpheres();
+//		vector<Sphere> spheres = {{{w / 2, h / 2, -100}, 100}};
 		vector<Triangle> triangles = generateRandomTriangles();
 		for_each(spheres.begin(), spheres.end(), [this](Sphere &sphere) { objects.push_back(new Sphere(sphere)); });
 //		for_each(triangles.begin(), triangles.end(), [this](Triangle &triangle) { objects.push_back(new Triangle(triangle)); });
@@ -88,52 +77,52 @@ struct RayTracing {
 	Color getPixelColor(Point pixel) const {
 		Intersect intersect = getIntersect({viewport.origin, pixel});
 		if (!intersect) {
-			return {0, 0, 0};
+			return BACKGROUND;
 		}
 		Object *object = intersect.object;
 		Point point = intersect.point;
 		Color color = object->material.color;
 
 //		light
-		LightPoint light = lights[0];
-		Intersect intersect2 = getIntersect({light, point});
-		if (intersect2.object == object && equals(point, intersect2.point)) {
-			double distance = (pixel - light).squareLength();
-			double ray2cos = object->getCos(point, light - point);
-			assert(ray2cos > 0);
+		if (1) {
+			LightPoint light = lights[0];
+			Intersect intersect2 = getIntersect({light, point});
+			if (intersect2.object == object && equals(point, intersect2.point)) {
+				double distance = (pixel - light).squareLength();
+				double ray2cos = object->getCos(point, light - point);
+				assert(ray2cos > 0);
 //			~ cos / r^2
-			double kPower = light.power / referenceLight.power;
-			double kDistance = (point - light).squareLength() / sqr(referenceLight.distance);
-			double k = ray2cos * kPower / kDistance;
-			if (k > 1) {
-				k = 1;
+				double kPower = light.power / referenceLight.power;
+				double kDistance = (point - light).squareLength() / sqr(referenceLight.distance);
+				double k = ray2cos * kPower / kDistance;
+				if (k > 1) {
+					k = 1;
+				}
+				assert(0 <= k && k <= 1);
+				return color * k;
 			}
-			assert(0 <= k && k <= 1);
-			return color * k;
+			return BACKGROUND;
 		}
 
-		return {0, 0, 0};
+		return color;
 	}
 
 	Intersect getIntersect(const Ray &ray) const {
 		auto comparator = [&ray](Object *o1, Object *o2) {
-			auto p1 = o1->intersect(ray);
-			auto p2 = o2->intersect(ray);
-			if (p1.first && !p2.first) {
+			Intersect i1 = o1->intersect(ray);
+			Intersect i2 = o2->intersect(ray);
+			if (i1.is && !i2.is) {
 				return true;
 			}
-			if (!p1.first && p2.first) {
+			if (!i1.is && i2.is) {
 				return false;
 			}
-			return p1.first && p2.first && p1.second < p2.second;
+			return i1.is && i2.is && i1.t < i2.t;
 		};
 		Object *object = *min_element(objects.begin(), objects.end(), comparator);
-		auto p = object->intersect(ray);
-		assert(p.second >= 0);
-		if (!p.first) {
-			return {p.first};
-		}
-		return {p.first, object, ray.pointAt(p.second)};
+		Intersect intersect = object->intersect(ray);
+		assert(intersect.t >= 0);
+		return intersect;
 	}
 };
 

@@ -4,6 +4,7 @@ using namespace std;
 
 int w = 800;
 int h = w;
+#define all(container) container.begin(), container.end()
 #include "debug.h"
 #include "glut.h"
 #include "ray_tracing.h"
