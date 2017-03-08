@@ -19,10 +19,18 @@ using namespace std;
 const ascii::Color defaultVariableColor = ascii::green;
 ostream &COUT = cout;
 
+template<typename T>
+std::string to_string_with_precision(T t, int n) {
+	std::ostringstream out;
+	out << std::setprecision(n) << t;
+	return out.str();
+}
+
 struct TimePrinter {
 	~TimePrinter() {
 		if (print_time) {
-			fprintf(stderr, "%.3f seconds\n", clock() / (float) CLOCKS_PER_SEC);
+//			fprintf(stderr, "%.3f seconds\n", clock() / (float) CLOCKS_PER_SEC);
+			cout << setprecision(3) << colored(to_string_with_precision(clock() / (float) CLOCKS_PER_SEC, 2) + " seconds", ascii::red) << endl;
 		}
 	}
 };
