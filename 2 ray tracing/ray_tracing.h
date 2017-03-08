@@ -34,13 +34,19 @@ struct RayTracing {
 	vector<Object *> objects;
 	ReferenceLight referenceLight;
 	vector<LightPoint> lights;
-	/*static */const Color BACKGROUND = {1, 1, 1};
+	/*static */const Color BACKGROUND = black;
+	static constexpr double BACKGROUND_LIGHT_RATIO = 0.2;
 
 	Matrix getMatrix() {
 		Matrix matrix = createMatrix(h, w);
 		createViewport();
 		createObjects();
 		createLights();
+
+//		Intersect intersect = getIntersect({viewport.origin, {400, 800, -400}});
+//		dbg(intersect);
+//		exit(0);
+
 //		getPixelColor(viewport.getPixel(h / 2, w / 2));
 		for (int i = 0; i < h; ++i) {
 			for (int j = 0; j < w; ++j) {
@@ -52,8 +58,8 @@ struct RayTracing {
 
 	void createViewport() {
 		viewport = {
-				{w / 2, h / 2, 100},
-//				{0, 0, 200},
+				{w / 2, h / 2, 10000},
+//				{0, 0, 400},
 				{0,     h,     0},
 				{0,     0,     0},
 				{w,     h,     0},
@@ -63,7 +69,10 @@ struct RayTracing {
 
 	void createObjects() {
 		vector<Sphere> spheres = generateRandomSpheres();
-//		vector<Sphere> spheres = {{{w / 2, h / 2, -100}, 100}};
+		vector<Sphere> spheres2 = {
+				{{0, h, -400}, 400},
+//				{{w, 0, -400}, 400},
+		};
 		vector<Triangle> triangles = generateRandomTriangles();
 		for_each(spheres.begin(), spheres.end(), [this](Sphere &sphere) { objects.push_back(new Sphere(sphere)); });
 //		for_each(triangles.begin(), triangles.end(), [this](Triangle &triangle) { objects.push_back(new Triangle(triangle)); });
@@ -79,32 +88,37 @@ struct RayTracing {
 		if (!intersect) {
 			return BACKGROUND;
 		}
+		static double x = 0;
 		Object *object = intersect.object;
 		Point point = intersect.point;
 		Color color = object->material.color;
 
 //		light
-		if (1) {
-			LightPoint light = lights[0];
-			Intersect intersect2 = getIntersect({light, point});
-			if (intersect2.object == object && equals(point, intersect2.point)) {
-				double distance = (pixel - light).squareLength();
-				double ray2cos = object->getCos(point, light - point);
-				assert(ray2cos > 0);
-//			~ cos / r^2
-				double kPower = light.power / referenceLight.power;
-				double kDistance = (point - light).squareLength() / sqr(referenceLight.distance);
-				double k = ray2cos * kPower / kDistance;
-				if (k > 1) {
-					k = 1;
-				}
-				assert(0 <= k && k <= 1);
-				return color * k;
-			}
-			return BACKGROUND;
-		}
+		double k = getLightRatio(pixel, intersect);
+		return color * min(k + BACKGROUND_LIGHT_RATIO, 1.0);
+	}
 
-		return color;
+	double getLightRatio(Point pixel, Intersect intersect) const {
+		Object *object = intersect.object;
+		Point point = intersect.point;
+
+		LightPoint light = lights[0];
+		Intersect intersect2 = getIntersect({light, point});
+		if (intersect2.object == object && equals(point, intersect2.point)) {
+			double distance = (pixel - light).squareLength();
+			double ray2cos = object->getCos(point, light - point);
+			assert(ray2cos > 0);
+//			~ cos / r^2
+			double kPower = light.power / referenceLight.power;
+			double kDistance = (point - light).squareLength() / sqr(referenceLight.distance);
+			double k = ray2cos * kPower / kDistance;
+			if (k > 1) {
+				k = 1;
+			}
+			assert(0 <= k && k <= 1);
+			return k;
+		}
+		return 0;
 	}
 
 	Intersect getIntersect(const Ray &ray) const {

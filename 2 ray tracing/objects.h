@@ -59,6 +59,8 @@ struct Sphere : public Object {
 
 		double t1 = (-b - sqrt(d)) / a;
 		double t2 = (-b + sqrt(d)) / a;
+//		dbg(ray.pointAt(t1));
+//		dbg(ray.pointAt(t2));
 		if (t1 < 0) {
 			assert(t2 < 0);  // нет объектов внутри сферы
 			return {false};
