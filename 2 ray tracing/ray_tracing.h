@@ -58,11 +58,27 @@ struct RayTracing {
 
 	Matrix getMatrix() {
 		assert(!objects.empty());
-		Matrix matrix = createMatrix(h, w);
-		for (int i = 0; i < h; ++i) {
-			for (int j = 0; j < w; ++j) {
-				matrix[i][j] = getPixelColor(viewport.getPixel(i, j));
+
+		auto worker = [this](Matrix *matrix, int qstart, int qend) {
+			for (int q = qstart; q < qend; ++q) {
+				int i = q / w;
+				int j = q % w;
+				(*matrix)[i][j] = getPixelColor(viewport.getPixel(i, j));
 			}
+		};
+
+		Matrix matrix = createMatrix(h, w);
+		vector<thread> threads;
+		int numberThreads = 4;
+		assert(h * w % numberThreads == 0);
+		int pixelsPerThread = h * w / numberThreads;
+		for (int i = 0; i < numberThreads; ++i) {
+			int qstart = pixelsPerThread * i;
+			int qend = pixelsPerThread * (i + 1);
+			threads.emplace_back(worker, &matrix, qstart, qend);
+		}
+		for (thread &t : threads) {
+			t.join();
 		}
 		return matrix;
 	}
