@@ -1,0 +1,63 @@
+# Описание экрана
+viewport
+	origin x y z		# Положение глаза наблюдателя
+	topleft x y z		# Верхний-левый угол экрана
+	bottomleft x y z	# Нижний-левый угол экрана
+	topright x y z		# Верхний-правый угол экрана
+endviewport
+
+# Описание материалов
+materials
+	entry
+		name <cpp-like-id>	# Имя
+		color <RGB>			# Цвет поверхности
+		alpha <0..1>		# Коэффициент прозрачности (1-непрозрачный)
+		reflect <0..1>		# Коэффициент отражения
+		refract <0..+∞>		# Коэффициент преломления
+	endentry
+	# ...
+endmaterials
+
+# Описание освещения сцены
+lights
+	# Описание нормировочных коэффициентов
+	reference
+		# Мощность эталонного источника
+		power p
+		# Расстояние от него до эталонной плоскости
+		distance d
+	endreference
+	# Описание одного источника света
+	point
+		# Координаты
+		coords x y z
+		# Мощность
+		power p
+	endpoint
+	# ...
+endlights
+
+# Описание примитивов
+geometry
+	sphere
+		coords x y z
+		radius r
+		material <id>
+	endsphere
+	# ...
+	triangle
+		vertex x y z
+		vertex x y z
+		vertex x y z
+		material <id>
+	endtriangle
+	# ...
+	quadrangle
+		vertex x y z
+		vertex x y z
+		vertex x y z
+		vertex x y z
+		material <id>
+	endquadrangle
+	# ...
+endgeometry

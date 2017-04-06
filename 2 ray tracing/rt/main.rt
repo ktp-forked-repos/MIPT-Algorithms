@@ -1,0 +1,109 @@
+# Описание экрана
+viewport
+	origin 400 400 1000
+	topleft 0 800 0
+	bottomleft 0 0 0
+	topright 800 800 0
+endviewport
+
+# Описание материалов
+materials
+	entry
+		name cyan
+		color 0 1 1
+		alpha 0
+		reflect 0
+		refract 0
+	endentry
+endmaterials
+
+# Описание освещения сцены
+lights
+	# Описание нормировочных коэффициентов
+	reference
+		# Мощность эталонного источника
+		power 1
+		# Расстояние от него до эталонной плоскости
+		distance 200
+	endreference
+	# Описание одного источника света
+	point
+		# Координаты
+		coords 400 400 0
+		# Мощность
+		power 1
+	endpoint
+	# ...
+endlights
+
+# Описание примитивов
+geometry
+	sphere
+    	coords 342.421 637.751 -157.019
+    	radius 81.6579
+    	material cyan
+    endsphere
+    sphere
+    	coords 760.644 455.901 -201.863
+    	radius 20.8165
+    	material cyan
+    endsphere
+    sphere
+    	coords 230.506 437.451 -268.208
+    	radius 74.8652
+    	material cyan
+    endsphere
+    sphere
+    	coords 740.611 329.426 -152.732
+    	radius 56.8755
+    	material cyan
+    endsphere
+    sphere
+    	coords 627.644 253.348 -280.842
+    	radius 68.3757
+    	material cyan
+    endsphere
+    sphere
+    	coords 185.956 475.024 -101.142
+    	radius 69.759
+    	material cyan
+    endsphere
+    sphere
+    	coords 1.69207 650.315 -237.367
+    	radius 64.5026
+    	material cyan
+    endsphere
+    sphere
+    	coords 35.5009 80.4716 -289.971
+    	radius 82.2708
+    	material cyan
+    endsphere
+    sphere
+    	coords 345.002 86.9183 -167.119
+    	radius 30.6068
+    	material cyan
+    endsphere
+    sphere
+    	coords 2.1941 256.029 -228.241
+    	radius 94.1128
+    	material cyan
+    endsphere
+	
+	
+#	# ...
+#	triangle
+#		vertex x y z
+#		vertex x y z
+#		vertex x y z
+#		material <id>
+#	endtriangle
+#	# ...
+#	quadrangle
+#		vertex x y z
+#		vertex x y z
+#		vertex x y z
+#		vertex x y z
+#		material <id>
+#	endquadrangle
+#	# ...
+endgeometry

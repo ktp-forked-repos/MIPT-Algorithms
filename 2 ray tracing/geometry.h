@@ -82,7 +82,8 @@ struct Ray {
 };
 
 ostream &operator<<(ostream &out, Point point) {
-	return out << "(" << point.x << " " << point.y << " " << point.z << ")";
+//	return out << "(" << point.x << " " << point.y << " " << point.z << ")";
+	return out << point.x << " " << point.y << " " << point.z;
 }
 
 ostream &operator<<(ostream &out, Ray ray) {

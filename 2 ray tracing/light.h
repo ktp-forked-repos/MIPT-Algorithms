@@ -17,6 +17,8 @@ struct ReferenceLight {
 struct LightPoint : public Point {
 	double power;
 
+	LightPoint() {}
+
 	LightPoint(Point point, double power) : Point(point), power(power) {}
 };
 

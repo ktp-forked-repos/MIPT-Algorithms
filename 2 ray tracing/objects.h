@@ -27,13 +27,15 @@ struct Intersect {
 struct Object {
 	Material material;
 
+	Object() {}
+
 	Object(const Material &material) : material(material) {}
 
 	virtual Intersect intersect(Ray ray) = 0;
 
 	virtual double getCos(Point point, Point v) const = 0;
 
-	virtual bool containsPoint(Point point) const = 0;
+//	virtual bool containsPoint(Point point) const = 0;
 
 	Intersect makeIntersect(const Ray &ray, double t) {
 		return {true, this, t, ray.pointAt(t)};
@@ -45,6 +47,8 @@ struct Object {
 struct Sphere : public Object {
 	Point center;
 	double radius;
+
+	Sphere() {}
 
 	Sphere(const Point &center, double radius, const Material &material = cyanMaterial) : Object(material), center(center), radius(radius) {}
 
@@ -59,8 +63,6 @@ struct Sphere : public Object {
 
 		double t1 = (-b - sqrt(d)) / a;
 		double t2 = (-b + sqrt(d)) / a;
-//		dbg(ray.pointAt(t1));
-//		dbg(ray.pointAt(t2));
 		if (t1 < 0) {
 			assert(t2 < 0);  // нет объектов внутри сферы
 			return {false};
@@ -72,15 +74,17 @@ struct Sphere : public Object {
 		return cos(point - center, vector);
 	}
 
-	bool containsPoint(Point point) const override {
-		return abs((point - center).length() - radius) < eps;
-	}
+//	bool containsPoint(Point point) const override {
+//		return abs((point - center).length() - radius) < eps;
+//	}
 };
 
 struct Triangle : public Object {
 	Point a;
 	Point b;
 	Point c;
+
+	Triangle() {}
 
 	Triangle(const Point &a, const Point &b, const Point &c, const Material &material = cyanMaterial) : Object(material), a(a), b(b), c(c) {}
 
@@ -118,6 +122,10 @@ struct Triangle : public Object {
 
 	static bool isLeft(Point v0, Point v1, Point n) {
 		return ((v0 * v1) ^ n) > 0;
+	}
+
+	double getCos(Point point, Point v) const override {
+		throw 1;
 	}
 };
 

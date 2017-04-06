@@ -29,7 +29,14 @@ ostream &operator<<(ostream &out, Intersect intersect) {
 	return printObject(out, "is", intersect.is, "object", intersect.object, "point", intersect.point);
 }
 
+class RayTracing;
+
+istream &operator>>(istream &in, RayTracing &tracing);
+
 struct RayTracing {
+	vector<Sphere> spheres;
+	vector<Triangle> triangles;
+
 	Viewport viewport;
 	vector<Object *> objects;
 	ReferenceLight referenceLight;
@@ -37,17 +44,21 @@ struct RayTracing {
 	/*static */const Color BACKGROUND = black;
 	static constexpr double BACKGROUND_LIGHT_RATIO = 0.2;
 
-	Matrix getMatrix() {
-		Matrix matrix = createMatrix(h, w);
+	void init() {
 		createViewport();
 		createObjects();
 		createLights();
+		postInit();
+	}
 
-//		Intersect intersect = getIntersect({viewport.origin, {400, 800, -400}});
-//		dbg(intersect);
-//		exit(0);
+	void postInit() {
+		for_each(spheres.begin(), spheres.end(), [this](Sphere &sphere) { objects.push_back(new Sphere(sphere)); });
+//		for_each(triangles.begin(), triangles.end(), [this](Triangle &triangle) { objects.push_back(new Triangle(triangle)); });
+	}
 
-//		getPixelColor(viewport.getPixel(h / 2, w / 2));
+	Matrix getMatrix() {
+		assert(!objects.empty());
+		Matrix matrix = createMatrix(h, w);
 		for (int i = 0; i < h; ++i) {
 			for (int j = 0; j < w; ++j) {
 				matrix[i][j] = getPixelColor(viewport.getPixel(i, j));
@@ -59,7 +70,6 @@ struct RayTracing {
 	void createViewport() {
 		viewport = {
 				{w / 2, h / 2, 10000},
-//				{0, 0, 400},
 				{0,     h,     0},
 				{0,     0,     0},
 				{w,     h,     0},
@@ -74,8 +84,6 @@ struct RayTracing {
 //				{{w, 0, -400}, 400},
 		};
 		vector<Triangle> triangles = generateRandomTriangles();
-		for_each(spheres.begin(), spheres.end(), [this](Sphere &sphere) { objects.push_back(new Sphere(sphere)); });
-//		for_each(triangles.begin(), triangles.end(), [this](Triangle &triangle) { objects.push_back(new Triangle(triangle)); });
 	}
 
 	void createLights() {

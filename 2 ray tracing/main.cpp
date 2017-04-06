@@ -4,10 +4,10 @@ using namespace std;
 
 int w = 800;
 int h = w;
-#define all(container) container.begin(), container.end()
 #include "debug.h"
 #include "glut.h"
 #include "ray_tracing.h"
+#include "rt.h"
 
 Matrix matrix;
 
@@ -31,10 +31,23 @@ void display() {
 	glFlush();
 }
 
+void printSpheres() {
+	vector<Sphere> spheres = generateRandomSpheres();
+	for (Sphere sphere : spheres) {
+		cout << "sphere" << endl;
+		cout << "	coords " << sphere.center << endl;
+		cout << "	radius " << sphere.radius << endl;
+		cout << "	material " << sphere.material << endl;
+		cout << "endsphere" << endl;
+	}
+}
+
 int main() {
 //	srand(time(nullptr));
 	srand(0);
+	ifstream in("rt/main.rt");
 	RayTracing rt;
+	in >> rt;
 	matrix = rt.getMatrix();
 	Glut glut(w, h, display);
 	return 0;
