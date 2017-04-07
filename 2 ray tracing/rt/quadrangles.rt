@@ -21,7 +21,7 @@ lights
 		distance 200
 	endreference
 	point
-		coords 400 400 0
+		coords 300 300 100
 		power 1
 	endpoint
 endlights
@@ -32,13 +32,13 @@ geometry
         vertex 400 100 100
         vertex 200 100 150
         vertex 200 300 200
-        material cyan
+        material red
     endquadrangle
 
     sphere
         coords 200 200 200
         radius 100
-        material cyan
+        material green
     endsphere
 
     quadrangle
@@ -54,6 +54,6 @@ geometry
         vertex 50 250 200
         vertex 50 100 200
         vertex 50 100 0
-        material cyan
+        material blue
     endquadrangle
 endgeometry

@@ -14,7 +14,11 @@ istream &operator>>(istream &in, Point &point) {
 	return in >> point.x >> point.y >> point.z;
 }
 
-map<string, Material> materials;
+map<string, Material> materials = {
+		{"red",   {"red",   {1, 0, 0}, 0, 0, 0}},
+		{"green", {"green", {0, 1, 0}, 0, 0, 0}},
+		{"blue",  {"blue",  {0, 0, 1}, 0, 0, 0}}
+};
 
 istream &operator>>(istream &in, Color &color) {
 	return in >> color.r >> color.g >> color.b;
