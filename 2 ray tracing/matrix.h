@@ -16,6 +16,10 @@ struct Color {
 	Color operator*(double k) const {
 		return Color(r * k, g * k, b * k);
 	}
+
+	Color operator+(Color color) const {
+		return Color(r + color.r, g + color.g, b + color.b);
+	}
 };
 
 typedef vector<vector<Color>> Matrix;

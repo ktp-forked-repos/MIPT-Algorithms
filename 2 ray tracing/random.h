@@ -43,4 +43,12 @@ vector<Triangle> generateRandomTriangles(size_t n = 10) {
 	return triangle;
 }
 
+vector<Quadrangle> generateRandomQuadrangles(size_t n = 10) {
+	vector<Quadrangle> quadrangles;
+	for (int i = 0; i < n; ++i) {
+		quadrangles.push_back({randomPoints(4), cyanMaterial});
+	}
+	return quadrangles;
+}
+
 #endif //RAY_TRACING_RANDOM_H

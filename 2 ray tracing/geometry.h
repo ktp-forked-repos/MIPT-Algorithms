@@ -24,8 +24,24 @@ struct Point {
 		return {x - point.x, y - point.y, z - point.z};
 	}
 
+	Point operator-() const {
+		return {-x, -y, -z};
+	}
+
 	Point operator*(double f) const {
 		return {x * f, y * f, z * f};
+	}
+
+	void operator*=(double f) {
+		x *= f;
+		y *= f;
+		z *= f;
+	}
+
+	void operator+=(const Point &point) {
+		x += point.x;
+		y += point.y;
+		z += point.z;
 	}
 
 	Point operator/(double f) const {
@@ -43,6 +59,10 @@ struct Point {
 		return {y * p.z - z * p.y,
 		        -(x * p.z - z * p.x),
 		        x * p.y - y * p.x};
+	}
+
+	Point normalized() const {
+		return *this / length();
 	}
 
 	double length() const {
@@ -78,6 +98,10 @@ struct Ray {
 
 	Point pointAt(double t) const {
 		return p + a * t;
+	}
+
+	void moveForward(double d) {
+		p += a * d / a.length();
 	}
 };
 

@@ -77,11 +77,4 @@ geometry
     	radius 94.1128
     	material cyan
     endsphere
-
-	triangle
-    	vertex 100 100 -100
-    	vertex 700 100 -100
-    	vertex 500 200 -400
-    	material cyan
-    endtriangle
 endgeometry

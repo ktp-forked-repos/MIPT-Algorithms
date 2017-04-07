@@ -36,6 +36,7 @@ istream &operator>>(istream &in, RayTracing &tracing);
 struct RayTracing {
 	vector<Sphere> spheres;
 	vector<Triangle> triangles;
+	vector<Quadrangle> quadrangles;
 
 	Viewport viewport;
 	vector<Object *> objects;
@@ -54,6 +55,7 @@ struct RayTracing {
 	void postInit() {
 		for_each(spheres.begin(), spheres.end(), [this](Sphere &sphere) { objects.push_back(new Sphere(sphere)); });
 		for_each(triangles.begin(), triangles.end(), [this](Triangle &triangle) { objects.push_back(new Triangle(triangle)); });
+		for_each(quadrangles.begin(), quadrangles.end(), [this](Quadrangle &quadrangle) { objects.push_back(new Quadrangle(quadrangle)); });
 	}
 
 	Matrix getMatrix() {
@@ -94,8 +96,9 @@ struct RayTracing {
 	}
 
 	void createObjects() {
-//		spheres = generateRandomSpheres();
-		triangles = generateRandomTriangles();
+//		spheres = generateRandomSpheres(5);
+//		triangles = generateRandomTriangles(5);
+		quadrangles = generateRandomQuadrangles();
 	}
 
 	void createLights() {
@@ -104,7 +107,11 @@ struct RayTracing {
 	}
 
 	Color getPixelColor(Point pixel) const {
-		Intersect intersect = getIntersect({viewport.origin, pixel});
+		return getPixelColor({viewport.origin, pixel});
+	}
+
+	Color getPixelColor(Ray ray) const {
+		Intersect intersect = getIntersect(ray);
 		if (!intersect) {
 			return BACKGROUND_COLOR;
 		}
@@ -113,33 +120,50 @@ struct RayTracing {
 		Color color = object->material.color;
 
 //		light
-		double k = getLightRatio(intersect);
-		return color * min(max(k, BACKGROUND_LIGHT_RATIO), 1.0);
+		double kOwn = getLightRatio(intersect);
+		kOwn = min(kOwn + BACKGROUND_LIGHT_RATIO, 1.0);
+
+//		reflect
+		double kReflect = object->material.reflect;
+		Color reflectColor = kReflect == 0 ? BACKGROUND_COLOR : getReflectColor(ray, intersect);
+
+		return color * kOwn * (1 - kReflect) + reflectColor * kReflect;
+	}
+
+	Color getReflectColor(Ray ray, Intersect intersect) const {
+		Object *object = intersect.object;
+		Point point = intersect.point;
+
+		Point vector = -ray.a.normalized();
+		Point normal = object->getNormal(point, vector).normalized();
+		Point projectionVectorOnNormal = normal * (vector ^ normal);
+		Point ortogonalVectorOnNormal = vector - projectionVectorOnNormal;
+		Point reflection = vector - ortogonalVectorOnNormal * 2;
+
+		Ray ray2 = {point, reflection};
+		ray2.moveForward(1e-3);
+		return getPixelColor(ray2);
 	}
 
 	double getLightRatio(Intersect intersect) const {
 		Object *object = intersect.object;
 		Point point = intersect.point;
 
-		LightPoint light = lights[0];
-		Intersect intersect2 = getIntersect({light, point});
-		if (intersect2.object == object && equals(point, intersect2.point)) {
-			double ray2cos = object->getCos(point, light - point);
-			if (ray2cos < 0) {
-				ray2cos *= -1;
+		double k = 0;
+		for (LightPoint light : lights) {
+			Intersect intersect2 = getIntersect({light, point});
+			if (intersect2.object == object && equals(point, intersect2.point)) {
+				double ray2cos = object->getCos(point, light - point);
+				assert(ray2cos > 0);
+//			    ~ cos / r^2
+				double kPower = light.power / referenceLight.power;
+				double kDistance = (point - light).squareLength() / sqr(referenceLight.distance);
+				double kAddidtion = ray2cos * kPower / kDistance;
+				assert(0 <= kAddidtion);
+				k += kAddidtion;
 			}
-			assert(ray2cos > 0);
-//			~ cos / r^2
-			double kPower = light.power / referenceLight.power;
-			double kDistance = (point - light).squareLength() / sqr(referenceLight.distance);
-			double k = ray2cos * kPower / kDistance;
-			if (k > 1) {
-				k = 1;
-			}
-			assert(0 <= k && k <= 1);
-			return k;
 		}
-		return 0;
+		return k;
 	}
 
 	Intersect getIntersect(const Ray &ray) const {
@@ -156,7 +180,7 @@ struct RayTracing {
 		};
 		Object *object = *min_element(objects.begin(), objects.end(), comparator);
 		Intersect intersect = object->intersect(ray);
-		assert(intersect.t >= 0);
+		assert(!intersect.is || intersect.t >= 0);
 		return intersect;
 	}
 };

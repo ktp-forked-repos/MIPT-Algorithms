@@ -57,8 +57,9 @@ void printTriangles() {
 int main() {
 //	srand(time(nullptr));
 	srand(0);
-	ifstream in("rt/triangles.rt");
+	ifstream in("rt/quadrangles.rt");
 	RayTracing rt;
+//	rt.init();
 	in >> rt;
 	matrix = rt.getMatrix();
 	Glut glut(w, h, display);

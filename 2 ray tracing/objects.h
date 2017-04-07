@@ -33,10 +33,10 @@ struct Object {
 
 	virtual Intersect intersect(Ray ray) = 0;
 
-	virtual Point getNormal(Point point) const = 0;
+	virtual Point getNormal(Point point, Point positiveVector) const = 0;
 
 	double getCos(Point point, Point vector) const {
-		return cos(getNormal(point), vector);
+		return cos(getNormal(point, vector), vector);
 	};
 
 //	virtual bool containsPoint(Point point) const = 0;
@@ -54,7 +54,7 @@ struct Sphere : public Object {
 
 	Sphere() {}
 
-	Sphere(const Point &center, double radius, const Material &material = cyanMaterial) : Object(material), center(center), radius(radius) {}
+	Sphere(const Point &center, double radius, const Material &material) : Object(material), center(center), radius(radius) {}
 
 	Intersect intersect(Ray ray) override {
 		double a = ray.a.squareLength();
@@ -68,13 +68,13 @@ struct Sphere : public Object {
 		double t1 = (-b - sqrt(d)) / a;
 		double t2 = (-b + sqrt(d)) / a;
 		if (t1 < 0) {
-			assert(t2 < 0);  // нет объектов внутри сферы
+//			assert(t2 < 0);  // нет объектов внутри сферы
 			return {false};
 		}
 		return makeIntersect(ray, t1);
 	}
 
-	Point getNormal(Point point) const override {
+	Point getNormal(Point point, Point positiveVector) const override {
 		return point - center;
 	}
 
@@ -83,6 +83,10 @@ struct Sphere : public Object {
 //	}
 };
 
+bool isLeft(Point v0, Point v1, Point n) {
+	return ((v0 * v1) ^ n) > 0;
+}
+
 struct Triangle : public Object {
 	Point a;
 	Point b;
@@ -90,23 +94,21 @@ struct Triangle : public Object {
 
 	Triangle() {}
 
-	Triangle(const Point &a, const Point &b, const Point &c, const Material &material = cyanMaterial) : Object(material), a(a), b(b), c(c) {}
+	Triangle(const Point &a, const Point &b, const Point &c, const Material &material) : Object(material), a(a), b(b), c(c) {}
 
-	Triangle(const vector<Point> &points, const Material &material = cyanMaterial) : Triangle(points[0], points[1], points[2], material) {
+	Triangle(const vector<Point> &points, const Material &material) : Triangle(points[0], points[1], points[2], material) {
 		assert(points.size() == 3);
 	}
 
 	Intersect intersect(Ray ray) override {
-		Point ab = b - a;
-		Point ac = c - a;
-		Point n = ab * ac;
-		double d = -(n ^ a);
+		Point normal = (b - a) * (c - b);
+		double d = -(normal ^ a);
 
-		if (abs(n ^ ray.a) < eps) {
+		if (abs(normal ^ ray.a) < eps) {
 			return {false};
 		}
 
-		double t = -(d + (n ^ ray.p)) / (n ^ ray.a);
+		double t = -(d + (normal ^ ray.p)) / (normal ^ ray.a);
 		Point p = ray.p + ray.a * t;
 		if (!isPointInside(p) || t < 0) {
 			return {false};
@@ -115,21 +117,65 @@ struct Triangle : public Object {
 	}
 
 	bool isPointInside(Point p) const {
-		Point ap = p - a;
-		Point ab = b - a;
-		Point bc = c - b;
-		Point n = ab * bc;
-		return isLeft(b - a, p - a, n)
-		       && isLeft(c - b, p - b, n)
-		       && isLeft(a - c, p - c, n);
+		Point normal = (b - a) * (c - b);
+		return isLeft(b - a, p - a, normal)
+		       && isLeft(c - b, p - b, normal)
+		       && isLeft(a - c, p - c, normal);
 	}
 
-	static bool isLeft(Point v0, Point v1, Point n) {
-		return ((v0 * v1) ^ n) > 0;
+	Point getNormal(Point point, Point positiveVector) const override {
+		Point normal = (b - a) * (c - b);
+		if ((normal ^ positiveVector) < 0) {
+			normal *= -1;
+		}
+		return normal;
+	}
+};
+
+struct Quadrangle : public Object {
+	Point a;
+	Point b;
+	Point c;
+	Point d;
+
+	Quadrangle() {}
+
+	Quadrangle(const Point &a, const Point &b, const Point &c, const Point &d, const Material &material) : Object(material), a(a), b(b), c(c), d(d) {}
+
+	Quadrangle(const vector<Point> &points, const Material &material) : Quadrangle(points[0], points[1], points[2], points[3], material) {
+		assert(points.size() == 4);
 	}
 
-	Point getNormal(Point point) const override {
-		return (b - a) * (c - a);
+	Intersect intersect(Ray ray) override {
+		Point normal = (b - a) * (c - b);
+		double d = -(normal ^ a);
+
+		if (abs(normal ^ ray.a) < eps) {
+			return {false};
+		}
+
+		double t = -(d + (normal ^ ray.p)) / (normal ^ ray.a);
+		Point p = ray.p + ray.a * t;
+		if (!isPointInside(p) || t < 0) {
+			return {false};
+		}
+		return makeIntersect(ray, t);
+	}
+
+	bool isPointInside(Point p) const {
+		Point normal = (b - a) * (c - b);
+		return isLeft(b - a, p - a, normal)
+		       && isLeft(c - b, p - b, normal)
+		       && isLeft(d - c, p - c, normal)
+		       && isLeft(a - d, p - d, normal);
+	}
+
+	Point getNormal(Point point, Point positiveVector) const override {
+		Point normal = (b - a) * (c - b);
+		if ((normal ^ positiveVector) < 0) {
+			normal *= -1;
+		}
+		return normal;
 	}
 };
 

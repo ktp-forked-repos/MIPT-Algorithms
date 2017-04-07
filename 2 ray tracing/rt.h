@@ -99,6 +99,15 @@ istream &operator>>(istream &in, Triangle &triangle) {
 	return in;
 }
 
+istream &operator>>(istream &in, Quadrangle &quadrangle) {
+	quadrangle.a = readPoint(in, "vertex");
+	quadrangle.b = readPoint(in, "vertex");
+	quadrangle.c = readPoint(in, "vertex");
+	quadrangle.d = readPoint(in, "vertex");
+	quadrangle.material = readMaterial(in, "material");
+	return in;
+}
+
 istream &operator>>(istream &in, RayTracing &tracing) {
 	stringstream ss;
 	{
@@ -136,8 +145,7 @@ istream &operator>>(istream &in, RayTracing &tracing) {
 					ss >> tracing.referenceLight;
 					ss >> token;
 					assert(token == "endreference");
-				}
-				if (token == "point") {
+				} else if (token == "point") {
 					LightPoint light;
 					ss >> light;
 					tracing.lights.push_back(light);
@@ -153,13 +161,18 @@ istream &operator>>(istream &in, RayTracing &tracing) {
 					tracing.spheres.push_back(sphere);
 					ss >> token;
 					assert(token == "endsphere");
-				}
-				if (token == "triangle") {
+				} else if (token == "triangle") {
 					Triangle triangle;
 					ss >> triangle;
 					tracing.triangles.push_back(triangle);
 					ss >> token;
 					assert(token == "endtriangle");
+				} else if (token == "quadrangle") {
+					Quadrangle quadrangle;
+					ss >> quadrangle;
+					tracing.quadrangles.push_back(quadrangle);
+					ss >> token;
+					assert(token == "endquadrangle");
 				}
 			}
 		}
