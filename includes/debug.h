@@ -43,6 +43,8 @@ long long gettime() {
 	return chrono::duration_cast<chrono::nanoseconds>(t1 - t0).count();
 }
 
+void nop() {}
+
 template<typename Iterator>
 ostream &write(ostream &out, Iterator begin, Iterator end) {
 	if (begin == end) {
