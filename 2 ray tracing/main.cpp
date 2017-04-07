@@ -60,7 +60,7 @@ void printTriangles() {
 int main() {
 //	srand(time(nullptr));
 	srand(0);
-	ifstream in("examples2/scene.rt");
+	ifstream in("examples2/transparent.rt");
 //	ifstream in("examples/triangles.rt");
 	RayTracing rt;
 //	rt.init();
