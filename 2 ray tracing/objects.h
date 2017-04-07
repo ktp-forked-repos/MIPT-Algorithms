@@ -33,7 +33,11 @@ struct Object {
 
 	virtual Intersect intersect(Ray ray) = 0;
 
-	virtual double getCos(Point point, Point v) const = 0;
+	virtual Point getNormal(Point point) const = 0;
+
+	double getCos(Point point, Point vector) const {
+		return cos(getNormal(point), vector);
+	};
 
 //	virtual bool containsPoint(Point point) const = 0;
 
@@ -70,8 +74,8 @@ struct Sphere : public Object {
 		return makeIntersect(ray, t1);
 	}
 
-	double getCos(Point point, Point vector) const override {
-		return cos(point - center, vector);
+	Point getNormal(Point point) const override {
+		return point - center;
 	}
 
 //	bool containsPoint(Point point) const override {
@@ -124,8 +128,8 @@ struct Triangle : public Object {
 		return ((v0 * v1) ^ n) > 0;
 	}
 
-	double getCos(Point point, Point v) const override {
-		throw 1;
+	Point getNormal(Point point) const override {
+		return (b - a) * (c - a);
 	}
 };
 

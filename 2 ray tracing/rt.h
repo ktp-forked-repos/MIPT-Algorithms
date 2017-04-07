@@ -47,6 +47,7 @@ Color readColor(istream &in, string expectedName) {
 
 Material readMaterial(istream &in, string expectedName) {
 	string id = readString(in, expectedName);
+	assert(materials.find(id) != materials.end());
 	return materials[id];
 }
 
@@ -65,6 +66,9 @@ istream &operator>>(istream &in, Material &material) {
 	material.alpha = readDouble(in, "alpha");
 	material.reflect = readDouble(in, "reflect");
 	material.refract = readDouble(in, "refract");
+	assert(0 <= material.alpha && material.alpha <= 1);
+	assert(0 <= material.reflect && material.reflect <= 1);
+	assert(0 <= material.refract);
 	return in;
 }
 

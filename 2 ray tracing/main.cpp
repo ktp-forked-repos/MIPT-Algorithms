@@ -42,10 +42,22 @@ void printSpheres() {
 	}
 }
 
+void printTriangles() {
+	vector<Triangle> triangles = generateRandomTriangles();
+	for (Triangle triangle : triangles) {
+		cout << "triangle" << endl;
+		cout << "	vertex " << triangle.a << endl;
+		cout << "	vertex " << triangle.b << endl;
+		cout << "	vertex " << triangle.c << endl;
+		cout << "	material " << triangle.material << endl;
+		cout << "endtriangle" << endl;
+	}
+}
+
 int main() {
 //	srand(time(nullptr));
 	srand(0);
-	ifstream in("rt/main.rt");
+	ifstream in("rt/triangles.rt");
 	RayTracing rt;
 	in >> rt;
 	matrix = rt.getMatrix();

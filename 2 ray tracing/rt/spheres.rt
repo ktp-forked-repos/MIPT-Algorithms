@@ -1,4 +1,3 @@
-# Описание экрана
 viewport
 	origin 400 400 1000
 	topleft 0 800 0
@@ -6,7 +5,6 @@ viewport
 	topright 800 800 0
 endviewport
 
-# Описание материалов
 materials
 	entry
 		name cyan
@@ -17,26 +15,17 @@ materials
 	endentry
 endmaterials
 
-# Описание освещения сцены
 lights
-	# Описание нормировочных коэффициентов
 	reference
-		# Мощность эталонного источника
 		power 1
-		# Расстояние от него до эталонной плоскости
 		distance 200
 	endreference
-	# Описание одного источника света
 	point
-		# Координаты
 		coords 400 400 0
-		# Мощность
 		power 1
 	endpoint
-	# ...
 endlights
 
-# Описание примитивов
 geometry
 	sphere
     	coords 342.421 637.751 -157.019
@@ -88,22 +77,11 @@ geometry
     	radius 94.1128
     	material cyan
     endsphere
-	
-	
-#	# ...
-#	triangle
-#		vertex x y z
-#		vertex x y z
-#		vertex x y z
-#		material <id>
-#	endtriangle
-#	# ...
-#	quadrangle
-#		vertex x y z
-#		vertex x y z
-#		vertex x y z
-#		vertex x y z
-#		material <id>
-#	endquadrangle
-#	# ...
+
+	triangle
+    	vertex 100 100 -100
+    	vertex 700 100 -100
+    	vertex 500 200 -400
+    	material cyan
+    endtriangle
 endgeometry

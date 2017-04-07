@@ -38,7 +38,7 @@ vector<Sphere> generateRandomSpheres(size_t n = 10) {
 vector<Triangle> generateRandomTriangles(size_t n = 10) {
 	vector<Triangle> triangle;
 	for (int i = 0; i < n; ++i) {
-//		triangle.push_back({randomPoints(3), cyanMaterial});
+		triangle.push_back({randomPoints(3), cyanMaterial});
 	}
 	return triangle;
 }

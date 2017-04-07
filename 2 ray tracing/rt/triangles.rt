@@ -1,0 +1,90 @@
+viewport
+	origin 400 400 1000
+	topleft 0 800 0
+	bottomleft 0 0 0
+	topright 800 800 0
+endviewport
+
+materials
+	entry
+		name cyan
+		color 0 1 1
+		alpha 0
+		reflect 0
+		refract 0
+	endentry
+endmaterials
+
+lights
+	reference
+		power 1
+		distance 200
+	endreference
+	point
+		coords 400 400 0
+		power 1
+	endpoint
+endlights
+
+geometry
+	triangle
+    	vertex 78.1179 603.761 -213.473
+    	vertex 47.7473 561.014 -261.438
+    	vertex 585.436 128.994 -286.394
+    	material cyan
+    endtriangle
+    triangle
+    	vertex 574.344 260.018 -178.062
+    	vertex 325.866 768.586 -108.571
+    	vertex 340.802 396.852 -103.507
+    	material cyan
+    endtriangle
+    triangle
+    	vertex 35.8416 784.035 -137.118
+    	vertex 690.871 438.913 -289.676
+    	vertex 96.7565 797.991 -159.924
+    	material cyan
+    endtriangle
+    triangle
+    	vertex 459.063 437.705 -259.482
+    	vertex 10.0992 354.254 -227.675
+    	vertex 207.647 229.491 -232.873
+    	material cyan
+    endtriangle
+    triangle
+    	vertex 716.379 529.151 -154.623
+    	vertex 526.448 719.286 -131.472
+    	vertex 756.579 53.7495 -165.552
+    	material cyan
+    endtriangle
+    triangle
+    	vertex 347.538 1.41681 -149.598
+    	vertex 783.027 239.799 -133.621
+    	vertex 729.297 141.062 -252.303
+    	material cyan
+    endtriangle
+    triangle
+    	vertex 624.156 698.134 -193.19
+    	vertex 523.828 715.335 -203.059
+    	vertex 571.23 791.225 -191.62
+    	material cyan
+    endtriangle
+    triangle
+    	vertex 676.344 791.04 -256.17
+    	vertex 194.609 761.508 -156.268
+    	vertex 148.552 153.135 -244.607
+    	material cyan
+    endtriangle
+    triangle
+    	vertex 456.085 294.767 -296.951
+    	vertex 519.341 224.098 -289.964
+    	vertex 404.31 420.744 -122.347
+    	material cyan
+    endtriangle
+    triangle
+    	vertex 589.266 758.218 -293.951
+    	vertex 205.627 206.628 -294.861
+    	vertex 582.153 724.186 -254.167
+    	material cyan
+    endtriangle
+endgeometry
