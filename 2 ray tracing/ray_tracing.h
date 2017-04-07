@@ -43,7 +43,7 @@ struct RayTracing {
 	ReferenceLight referenceLight;
 	vector<LightPoint> lights;
 	/*static */const Color BACKGROUND_COLOR = black;
-	/*static *//*constexpr */double BACKGROUND_LIGHT_RATIO = 0.1;
+	/*static *//*constexpr */double BACKGROUND_LIGHT_RATIO = 0.2;
 
 	void init() {
 		createViewport();
@@ -151,7 +151,7 @@ struct RayTracing {
 
 		color *= alphaOwn;
 		color = unionColors(color, reflectColor, alphaReflect);
-		color = unionColors(color, refractColor, alphaRefract);
+		color = unionColors(color, refractColor, 1 - alphaRefract);
 		return color;
 	}
 

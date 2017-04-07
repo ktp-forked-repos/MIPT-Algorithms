@@ -1,19 +1,19 @@
 # Описание экрана
 viewport
     origin x y z        # Положение глаза наблюдателя
-    topleft x y z        # Верхний-левый угол экрана
+    topleft x y z       # Верхний-левый угол экрана
     bottomleft x y z    # Нижний-левый угол экрана
-    topright x y z        # Верхний-правый угол экрана
+    topright x y z      # Верхний-правый угол экрана
 endviewport
 
 # Описание материалов
 materials
     entry
-        name <cpp-like-id>    # Имя
-        color <RGB>            # Цвет поверхности
+        name <cpp-like-id>  # Имя
+        color <RGB>         # Цвет поверхности
         alpha <0..1>        # Коэффициент прозрачности (1-непрозрачный)
-        reflect <0..1>        # Коэффициент отражения
-        refract <0..+∞>        # Коэффициент преломления
+        reflect <0..1>      # Коэффициент отражения
+        refract <0..+∞>     # Коэффициент преломления
     endentry
     # ...
 endmaterials

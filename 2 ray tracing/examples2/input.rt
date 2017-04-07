@@ -49,44 +49,21 @@ materials
 		refract 0
 	endentry
 	entry
-		name id2
-		color 100 100 155
-		alpha 1
-		reflect 0.1
-		refract 0
-	endentry
-	entry
-		name id3
-		color 10 155 40
-		alpha 1
-		reflect 0.1
-		refract 0
-	endentry
-	
-	entry
 		name mirror
 		color 255 255 255
 		alpha 1
 		reflect 0.5
 		refract 0
 	endentry
-	
-	entry
-		name mirroryellow
-		color 255 255 0
-		alpha 1
-		reflect 0.75
-		refract 0
-	endentry
 endmaterials
 
 geometry
     quadrangle
-    vertex 400 300 250
-    vertex 400 100 200
-    vertex 200 100 250
-    vertex 200 300 300
-    material id1
+        vertex 400 300 250
+        vertex 400 100 200
+        vertex 200 100 250
+        vertex 200 300 300
+        material id1
     endquadrangle
 	quadrangle
 		vertex 500 400 100

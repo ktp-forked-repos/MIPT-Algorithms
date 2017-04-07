@@ -4,6 +4,7 @@
 using namespace std;
 
 #include "ray_tracing.h"
+const bool COLORS255 = true;
 
 void trim(string &s) {
 	s.erase(0, s.find_first_not_of(" \t"));
@@ -15,13 +16,22 @@ istream &operator>>(istream &in, Point &point) {
 }
 
 map<string, Material> materials = {
-		{"red",   {"red",   {1, 0, 0}, 0, 0, 0}},
-		{"green", {"green", {0, 1, 0}, 0, 0, 0}},
-		{"blue",  {"blue",  {0, 0, 1}, 0, 0, 0}}
+		{"red",   {"red",   {1, 0, 0}, 1, 0, 0}},
+		{"green", {"green", {0, 1, 0}, 1, 0, 0}},
+		{"blue",  {"blue",  {0, 0, 1}, 1, 0, 0}}
 };
 
 istream &operator>>(istream &in, Color &color) {
-	return in >> color.r >> color.g >> color.b;
+	in >> color.r >> color.g >> color.b;
+	if (COLORS255) {
+		color.r /= 255;
+		color.g /= 255;
+		color.b /= 255;
+	}
+	assert(0 <= color.r && color.r <= 1);
+	assert(0 <= color.g && color.g <= 1);
+	assert(0 <= color.b && color.b <= 1);
+	return in;
 }
 
 template<typename T>

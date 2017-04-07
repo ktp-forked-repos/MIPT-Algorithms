@@ -14,11 +14,11 @@ materials
         refract 0
     endentry
     entry
-        name reflect
-        color 1 1 1
-        alpha 1
-        reflect 0.5
-        refract 0
+        name refract
+        color 1 0 0
+        alpha 0.5
+        reflect 0
+        refract 0.8
     endentry
 endmaterials
 
@@ -39,58 +39,58 @@ geometry
         vertex 0 800 400
         vertex 800 800 400
         vertex 800 0 400
-        material reflect
+        material cyan
     endquadrangle
 
     sphere
         coords 211.597 420.343 154.16
         radius 21.1132
-        material cyan
+        material refract
     endsphere
     sphere
         coords 299.524 354.664 199.461
         radius 22.8989
-        material cyan
+        material refract
     endsphere
     sphere
         coords 623.026 70.4692 223.217
         radius 43.1565
-        material cyan
+        material refract
     endsphere
     sphere
         coords 424.617 606.362 278.79
         radius 26.7439
-        material cyan
+        material refract
     endsphere
     sphere
         coords 320.952 328.574 159.686
         radius 44.4255
-        material cyan
+        material refract
     endsphere
     sphere
         coords 392.11 460.983 177.047
         radius 44.3564
-        material cyan
+        material refract
     endsphere
     sphere
 
         coords 487.952 481.599 162.8
         radius 23.7934
-        material cyan
+        material refract
     endsphere
     sphere
         coords 665.007 634.89 188.681
         radius 52.1268
-        material cyan
+        material refract
     endsphere
     sphere
         coords 743.943 240.677 229.128
         radius 22.7473
-        material cyan
+        material refract
     endsphere
     sphere
         coords 366.132 271.062 139.479
         radius 57.0782
-        material cyan
+        material refract
     endsphere
 endgeometry

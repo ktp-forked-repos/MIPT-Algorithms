@@ -9,7 +9,7 @@ materials
     entry
         name cyan
         color 0 1 1
-        alpha 0
+        alpha 1
         reflect 0
         refract 0
     endentry
