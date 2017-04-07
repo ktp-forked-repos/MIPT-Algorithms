@@ -35,9 +35,9 @@ void printSpheres() {
 	vector<Sphere> spheres = generateRandomSpheres();
 	for (Sphere sphere : spheres) {
 		cout << "sphere" << endl;
-		cout << "	coords " << sphere.center << endl;
-		cout << "	radius " << sphere.radius << endl;
-		cout << "	material " << sphere.material << endl;
+		cout << "    coords " << sphere.center << endl;
+		cout << "    radius " << sphere.radius << endl;
+		cout << "    material " << sphere.material << endl;
 		cout << "endsphere" << endl;
 	}
 }
@@ -46,10 +46,10 @@ void printTriangles() {
 	vector<Triangle> triangles = generateRandomTriangles();
 	for (Triangle triangle : triangles) {
 		cout << "triangle" << endl;
-		cout << "	vertex " << triangle.a << endl;
-		cout << "	vertex " << triangle.b << endl;
-		cout << "	vertex " << triangle.c << endl;
-		cout << "	material " << triangle.material << endl;
+		cout << "    vertex " << triangle.a << endl;
+		cout << "    vertex " << triangle.b << endl;
+		cout << "    vertex " << triangle.c << endl;
+		cout << "    material " << triangle.material << endl;
 		cout << "endtriangle" << endl;
 	}
 }
@@ -57,7 +57,7 @@ void printTriangles() {
 int main() {
 //	srand(time(nullptr));
 	srand(0);
-	ifstream in("rt/quadrangles.rt");
+	ifstream in("rt/reflection.rt");
 	RayTracing rt;
 //	rt.init();
 	in >> rt;

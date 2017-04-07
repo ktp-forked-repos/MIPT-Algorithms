@@ -16,7 +16,7 @@ double randf(double a, double b) {
 }
 
 Point randomPoint() {
-	return {randf(0, w), randf(0, h), randf(-300, -100)};
+	return {randf(0, w), randf(0, h), randf(100, 300)};
 }
 
 vector<Point> randomPoints(size_t n) {
@@ -30,7 +30,7 @@ vector<Point> randomPoints(size_t n) {
 vector<Sphere> generateRandomSpheres(size_t n = 10) {
 	vector<Sphere> spheres;
 	for (int i = 0; i < n; ++i) {
-		spheres.push_back({randomPoint(), randf(20, 100), cyanMaterial});
+		spheres.push_back({randomPoint(), randf(20, 60), cyanMaterial});
 	}
 	return spheres;
 }

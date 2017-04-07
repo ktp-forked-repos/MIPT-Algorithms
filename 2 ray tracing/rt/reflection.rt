@@ -1,48 +1,96 @@
 viewport
-	origin 400 400 1000
-	topleft 0 800 0
-	bottomleft 0 0 0
-	topright 800 800 0
+    origin 400 400 -1000
+    topleft 0 800 0
+    bottomleft 0 0 0
+    topright 800 800 0
 endviewport
 
 materials
-	entry
-		name cyan
-		color 0 1 1
-		alpha 0
-		reflect 0
-		refract 0
-	endentry
-	entry
-		name reflection
-		color 1 1 1
-		alpha 0
-		reflect 0.5
-		refract 0
-	endentry
+    entry
+        name cyan
+        color 0 1 1
+        alpha 0
+        reflect 0
+        refract 0
+    endentry
+    entry
+        name reflection
+        color 1 1 1
+        alpha 0
+        reflect 0.5
+        refract 0
+    endentry
 endmaterials
 
 lights
-	reference
-		power 1
-		distance 200
-	endreference
-	point
-		coords 400 400 0
-		power 1
-	endpoint
+    reference
+        power 1
+        distance 200
+    endreference
+    point
+        coords 400 400 0
+        power 1
+    endpoint
 endlights
 
 geometry
-	sphere
-    	coords 500 500 -100
-    	radius 70
-    	material cyan
+    quadrangle
+        vertex 0 0 400
+        vertex 0 800 400
+        vertex 800 800 400
+        vertex 800 0 400
+        material reflection
+    endquadrangle
+
+    sphere
+        coords 211.597 420.343 154.16
+        radius 21.1132
+        material cyan
     endsphere
-	#triangle
-    #	vertex -400 -400 -200
-    #	vertex 2000 -400 -200
-    #	vertex 400 2000 -200
-    #	material reflection
-    #endtriangle
+    sphere
+        coords 299.524 354.664 199.461
+        radius 22.8989
+        material cyan
+    endsphere
+    sphere
+        coords 623.026 70.4692 223.217
+        radius 43.1565
+        material cyan
+    endsphere
+    sphere
+        coords 424.617 606.362 278.79
+        radius 26.7439
+        material cyan
+    endsphere
+    sphere
+        coords 320.952 328.574 159.686
+        radius 44.4255
+        material cyan
+    endsphere
+    sphere
+        coords 392.11 460.983 177.047
+        radius 44.3564
+        material cyan
+    endsphere
+    sphere
+
+        coords 487.952 481.599 162.8
+        radius 23.7934
+        material cyan
+    endsphere
+    sphere
+        coords 665.007 634.89 188.681
+        radius 52.1268
+        material cyan
+    endsphere
+    sphere
+        coords 743.943 240.677 229.128
+        radius 22.7473
+        material cyan
+    endsphere
+    sphere
+        coords 366.132 271.062 139.479
+        radius 57.0782
+        material cyan
+    endsphere
 endgeometry

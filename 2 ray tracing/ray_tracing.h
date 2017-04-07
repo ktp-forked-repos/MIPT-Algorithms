@@ -137,10 +137,11 @@ struct RayTracing {
 		Point vector = -ray.a.normalized();
 		Point normal = object->getNormal(point, vector).normalized();
 		Point projectionVectorOnNormal = normal * (vector ^ normal);
+		assert((vector ^ normal) > 0);
 		Point ortogonalVectorOnNormal = vector - projectionVectorOnNormal;
 		Point reflection = vector - ortogonalVectorOnNormal * 2;
 
-		Ray ray2 = {point, reflection};
+		Ray ray2 = {point, point + reflection};
 		ray2.moveForward(1e-3);
 		return getPixelColor(ray2);
 	}
