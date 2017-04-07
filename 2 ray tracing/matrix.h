@@ -17,8 +17,20 @@ struct Color {
 		return Color(r * k, g * k, b * k);
 	}
 
+	void operator/=(double k) {
+		r /= k;
+		g /= k;
+		b /= k;
+	}
+
 	Color operator+(Color color) const {
 		return Color(r + color.r, g + color.g, b + color.b);
+	}
+
+	void operator+=(Color color) {
+		r += color.r;
+		g += color.g;
+		b += color.b;
 	}
 };
 

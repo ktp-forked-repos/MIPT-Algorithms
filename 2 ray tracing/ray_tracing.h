@@ -63,24 +63,37 @@ struct RayTracing {
 
 		auto worker = [this](Matrix *matrix, int qstart, int qend) {
 			for (int q = qstart; q < qend; ++q) {
-				int i = q / w;
-				int j = q % w;
+				int i = q / wBig;
+				int j = q % wBig;
 				(*matrix)[i][j] = getPixelColor(viewport.getPixel(i, j));
 			}
 		};
 
-		Matrix matrix = createMatrix(h, w);
+		Matrix matrixScale = createMatrix(hBig, wBig);
 		vector<thread> threads;
 		int numberThreads = 4;
-		assert(h * w % numberThreads == 0);
-		int pixelsPerThread = h * w / numberThreads;
+		assert(hBig * wBig % numberThreads == 0);
+		int pixelsPerThread = hBig * wBig / numberThreads;
 		for (int i = 0; i < numberThreads; ++i) {
 			int qstart = pixelsPerThread * i;
 			int qend = pixelsPerThread * (i + 1);
-			threads.emplace_back(worker, &matrix, qstart, qend);
+			threads.emplace_back(worker, &matrixScale, qstart, qend);
 		}
 		for (thread &t : threads) {
 			t.join();
+		}
+
+		Matrix matrix = createMatrix(h, w);
+		for (int i = 0; i < h; ++i) {
+			for (int j = 0; j < w; ++j) {
+				matrix[i][j] = Color(0, 0, 0);
+				for (int iScale = 0; iScale < antiAliasingScale; ++iScale) {
+					for (int jScale = 0; jScale < antiAliasingScale; ++jScale) {
+						matrix[i][j] += matrixScale[i + iScale][j + iScale];
+					}
+				}
+				matrix[i][j] /= antiAliasingScale * antiAliasingScale;
+			}
 		}
 		return matrix;
 	}

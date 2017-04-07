@@ -2,8 +2,11 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-int w = 800;
-int h = w;
+int h = 800;
+int w = h;
+int antiAliasingScale = 4;
+int hBig = h * antiAliasingScale;
+int wBig = w * antiAliasingScale;
 #include "debug.h"
 #include "glut.h"
 #include "ray_tracing.h"
