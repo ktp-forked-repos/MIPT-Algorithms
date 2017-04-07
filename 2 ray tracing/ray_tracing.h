@@ -123,6 +123,10 @@ struct RayTracing {
 		return getPixelColor({viewport.origin, pixel});
 	}
 
+	static Color unionColors(Color color1, Color color2, double alpha2) {
+		return color1 * (1 - alpha2) + color2 * alpha2;
+	}
+
 	Color getPixelColor(Ray ray) const {
 		Intersect intersect = getIntersect(ray);
 		if (!intersect) {
@@ -133,14 +137,22 @@ struct RayTracing {
 		Color color = object->material.color;
 
 //		light
-		double kOwn = getLightRatio(intersect);
-		kOwn = min(kOwn + BACKGROUND_LIGHT_RATIO, 1.0);
+		double alphaOwn = getLightRatio(intersect);
+		alphaOwn = min(alphaOwn + BACKGROUND_LIGHT_RATIO, 1.0);
 
 //		reflect
-		double kReflect = object->material.reflect;
-		Color reflectColor = kReflect == 0 ? BACKGROUND_COLOR : getReflectColor(ray, intersect);
+		double alphaReflect = object->material.reflect;
+		Color reflectColor = alphaReflect == 0 ? BACKGROUND_COLOR : getReflectColor(ray, intersect);
 
-		return color * kOwn * (1 - kReflect) + reflectColor * kReflect;
+//		refract
+		double alphaRefract = object->material.alpha;
+		double kRefract = object->material.refract;
+		Color refractColor = kRefract == 0 ? BACKGROUND_COLOR : getRefractColor(ray, intersect, kRefract);
+
+		color *= alphaOwn;
+		color = unionColors(color, reflectColor, alphaReflect);
+		color = unionColors(color, refractColor, alphaRefract);
+		return color;
 	}
 
 	Color getReflectColor(Ray ray, Intersect intersect) const {
@@ -149,12 +161,32 @@ struct RayTracing {
 
 		Point vector = -ray.a.normalized();
 		Point normal = object->getNormal(point, vector).normalized();
-		Point projectionVectorOnNormal = normal * (vector ^ normal);
 		assert((vector ^ normal) > 0);
+		Point projectionVectorOnNormal = normal * (vector ^ normal);
 		Point ortogonalVectorOnNormal = vector - projectionVectorOnNormal;
-		Point reflection = vector - ortogonalVectorOnNormal * 2;
 
+		Point reflection = vector - ortogonalVectorOnNormal * 2;
 		Ray ray2 = {point, point + reflection};
+		ray2.moveForward(1e-3);
+		return getPixelColor(ray2);
+	}
+
+	Color getRefractColor(Ray ray, Intersect intersect, double kRefract) const {
+		Object *object = intersect.object;
+		Point point = intersect.point;
+
+		Point vector = ray.a.normalized();
+		Point normal = object->getNormal(point, vector).normalized();
+		if ((vector ^ normal) < 0) {
+			normal *= -1;
+			kRefract = 1 / kRefract;
+		}
+		assert((vector ^ normal) > 0);
+		Point projectionVectorOnNormal = normal * (vector ^ normal);
+		Point ortogonalVectorOnNormal = vector - projectionVectorOnNormal;
+
+		Point refraction = projectionVectorOnNormal + ortogonalVectorOnNormal * kRefract;
+		Ray ray2 = {point, point + refraction};
 		ray2.moveForward(1e-3);
 		return getPixelColor(ray2);
 	}

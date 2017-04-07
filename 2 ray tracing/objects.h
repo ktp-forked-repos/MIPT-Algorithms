@@ -71,6 +71,7 @@ struct Sphere : public Object {
 //			assert(t2 < 0);  // нет объектов внутри сферы
 			return {false};
 		}
+//		dbg(ray.a, a, b, d, c, t1, t2);
 		return makeIntersect(ray, t1);
 	}
 

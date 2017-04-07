@@ -4,7 +4,7 @@ using namespace std;
 
 int h = 800;
 int w = h;
-int antiAliasingScale = 4;
+int antiAliasingScale = 1;
 int hBig = h * antiAliasingScale;
 int wBig = w * antiAliasingScale;
 #include "debug.h"
@@ -60,7 +60,7 @@ void printTriangles() {
 int main() {
 //	srand(time(nullptr));
 	srand(0);
-	ifstream in("rt/reflection.rt");
+	ifstream in("examples2/rc2.rt");
 	RayTracing rt;
 //	rt.init();
 	in >> rt;

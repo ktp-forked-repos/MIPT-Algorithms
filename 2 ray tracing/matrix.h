@@ -17,6 +17,12 @@ struct Color {
 		return Color(r * k, g * k, b * k);
 	}
 
+	void operator*=(double k) {
+		r *= k;
+		g *= k;
+		b *= k;
+	}
+
 	void operator/=(double k) {
 		r /= k;
 		g /= k;
