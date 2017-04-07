@@ -1,33 +1,33 @@
 viewport
-	origin 400 400 -1000
-	topleft 0 800 0
-	bottomleft 0 0 0
-	topright 800 800 0
+    origin 400 400 -1000
+    topleft 0 800 0
+    bottomleft 0 0 0
+    topright 800 800 0
 endviewport
 
 materials
-	entry
-		name cyan
-		color 0 1 1
-		alpha 0
-		reflect 0
-		refract 0
-	endentry
+    entry
+        name cyan
+        color 0 1 1
+        alpha 0
+        reflect 0
+        refract 0
+    endentry
 endmaterials
 
 lights
-	reference
-		power 1
-		distance 200
-	endreference
-	point
-		coords 300 300 100
-		power 1
-	endpoint
+    reference
+        power 1
+        distance 200
+    endreference
+    point
+        coords 300 300 100
+        power 1
+    endpoint
 endlights
 
 geometry
-	quadrangle
+    quadrangle
         vertex 400 300 150
         vertex 400 100 100
         vertex 200 100 150
