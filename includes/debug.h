@@ -9,7 +9,7 @@ void nop() {}
 #define dbgl(...) nop()
 #endif
 */
-bool dont = 0;
+bool dont = 1;
 bool multi = 0;
 bool print_time = 1;
 
@@ -17,7 +17,7 @@ bool print_time = 1;
 using namespace std;
 #include "colors.h"
 const ascii::Color defaultVariableColor = ascii::green;
-ostream &COUT = cerr;
+ostream &COUT = cout;
 
 template<typename T>
 std::string to_string_with_precision(T t, int n) {
@@ -119,21 +119,21 @@ void myPrintLabel(string label, const char *names, Args &&... args) {
 }
 
 template<typename T>
-void test(const T &t, string expected) {
+void testDbgFunction(const T &t, string expected) {
 	ostringstream out;
 	out << t;
 	assert(out.str() == expected);
 }
 
-void test() {
-	test(vector<int>{1, 2, 3}, "{1, 2, 3}");
-	test(set<int> {1, 2, 3}, "{1, 2, 3}");
-	test(map<int, int> {{1, 10},
-	                    {2, 20}}, "{{1, 10}, {2, 20}}");
-	test(pair<int, int>{1, 2}, "{1, 2}");
-	test(string{"abc"}, "abc");
-	test("abc", "abc");
-	test(7, "7");
-	test(atomic_int{7}, "7");
-	test((void *) 7, "0x7");
+void testDbgFunction() {
+	testDbgFunction(vector<int>{1, 2, 3}, "{1, 2, 3}");
+	testDbgFunction(set<int> {1, 2, 3}, "{1, 2, 3}");
+	testDbgFunction(map<int, int> {{1, 10},
+	                               {2, 20}}, "{{1, 10}, {2, 20}}");
+	testDbgFunction(pair<int, int>{1, 2}, "{1, 2}");
+	testDbgFunction(string{"abc"}, "abc");
+	testDbgFunction("abc", "abc");
+	testDbgFunction(7, "7");
+	testDbgFunction(atomic_int{7}, "7");
+	testDbgFunction((void *) 7, "0x7");
 }
