@@ -39,10 +39,10 @@ int log2i(size_t size) {
 	return log;
 }
 
-const int NUMBER_MINBLOCKS_IN_SUPERBLOCK = 8 * 1024;
+const int NUMBER_MINBLOCKS_IN_SUPERBLOCK = 1024;
 const int MINBLOCK_SIZE_DATA = 128;
 const int MINBLOCK_SIZE_ALL = MINBLOCK_SIZE_DATA + sizeof(Block);
-const int SUPERBLOCK_SIZE_DATA = NUMBER_MINBLOCKS_IN_SUPERBLOCK * MINBLOCK_SIZE_DATA;
+//const int SUPERBLOCK_SIZE_DATA = NUMBER_MINBLOCKS_IN_SUPERBLOCK * MINBLOCK_SIZE_DATA;
 const int SUPERBLOCK_SIZE_ALL = NUMBER_MINBLOCKS_IN_SUPERBLOCK * MINBLOCK_SIZE_ALL;
 const int NUMBER_BLOCK_TYPES = log2i(MINBLOCK_SIZE_DATA * NUMBER_MINBLOCKS_IN_SUPERBLOCK) + 1;
 const int BLOCK_TYPE_MIN = log2i(MINBLOCK_SIZE_DATA);
@@ -110,7 +110,7 @@ struct LocalAllocator {
 	}
 
 	Superblock *getSuperBlock() {
-		dbgl("getSuperBlock", threadIndex);
+		//dbgl("getSuperBlock", threadIndex);
 		Superblock *superblock = globalAllocator.getSuperBlock();
 		for (int i = 0; i < NUMBER_MINBLOCKS_IN_SUPERBLOCK; ++i) {
 			Block *block = superblock->getKthMinblock(i);
@@ -131,7 +131,7 @@ struct LocalAllocator {
 			blocksBySize.back().push_back(superblock->getLargestBlock());
 			block = getBlock(size);
 		}
-		dbgl("+", threadIndex, size, block);
+		//dbgl("+", threadIndex, size, block);
 
 		Superblock *superblock = block->superblock;
 		superblock->dataSize += block->getDataSize();
@@ -151,7 +151,7 @@ struct LocalAllocator {
 	Block *getBlock(size_t size) {
 		for (int i = BLOCK_TYPE_MIN; i < NUMBER_BLOCK_TYPES; ++i) {
 			int blockSize = 1 << i;
-			if (size <= blockSize && !blocksBySize[i].empty()) {
+			if ((int) size <= blockSize && !blocksBySize[i].empty()) {
 				Block *block = blocksBySize[i].back();
 				blocksBySize[i].pop_back();
 				block->blockType = divideBlockToFitSize(block, i, size);
@@ -163,7 +163,7 @@ struct LocalAllocator {
 	}
 
 	void mtfree(char *data) {
-		dbgl("-", threadIndex, data);
+		//dbgl("-", threadIndex, data);
 		Block *block = Block::getBlockFromData(data);
 		if (block->threadIndex == threadIndex) {
 			blocksBySize[block->blockType].push_back(block);
@@ -231,8 +231,9 @@ void test(int numberThreads, int numberOperations, bool useCustomMalloc) {
 }
 
 int main() {
-	test(10, 100, true);
-//	test(10, 100, false);
+	for (int i = 0; i < 10000; ++i) {
+		mtalloc(rand() % 100);
+	}
 	return 0;
 }
 
