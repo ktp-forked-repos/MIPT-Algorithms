@@ -9,7 +9,7 @@ void nop() {}
 #define dbgl(...) nop()
 #endif
 */
-bool dont = 1;
+bool dont = 0;
 bool multi = 0;
 bool print_time = 1;
 

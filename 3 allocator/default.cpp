@@ -2,7 +2,6 @@
 #include <cassert>
 
 extern void *mtalloc(size_t size) {
-    assert(0);
     return malloc(size);
 }
 

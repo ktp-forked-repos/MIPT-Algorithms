@@ -40,10 +40,10 @@ int log2i(size_t size) {
 	return log;
 }
 
-const int NUMBER_MINBLOCKS_IN_SUPERBLOCK = 1024;
+const int NUMBER_MINBLOCKS_IN_SUPERBLOCK = 8 * 1024;
 const int MINBLOCK_SIZE_DATA = 128;
 const int MINBLOCK_SIZE_ALL = MINBLOCK_SIZE_DATA + sizeof(Block);
-//const int SUPERBLOCK_SIZE_DATA = NUMBER_MINBLOCKS_IN_SUPERBLOCK * MINBLOCK_SIZE_DATA;
+const int SUPERBLOCK_SIZE_DATA = NUMBER_MINBLOCKS_IN_SUPERBLOCK * MINBLOCK_SIZE_DATA;
 const int SUPERBLOCK_SIZE_ALL = NUMBER_MINBLOCKS_IN_SUPERBLOCK * MINBLOCK_SIZE_ALL;
 const int NUMBER_BLOCK_TYPES = log2i(MINBLOCK_SIZE_DATA * NUMBER_MINBLOCKS_IN_SUPERBLOCK) + 1;
 const int BLOCK_TYPE_MIN = log2i(MINBLOCK_SIZE_DATA);
@@ -79,18 +79,32 @@ Block *Superblock::getLargestBlock() {
 struct GlobalAllocator {
 //    суперблок --- несколько последовательных минблоков
 //    минблок --- <Block> и <MINBLOCK_SIZE_DATA байт>
-	vector<Superblock *> superblocks;
+	vector<Superblock *> superblocksAll;
+	vector<Superblock *> superblocksEmpty;
 
 	Superblock *getSuperBlock() {
 		assert(sizeof(char) == 1);
-		Superblock *superblock = (Superblock *) malloc(sizeof(Superblock) + SUPERBLOCK_SIZE_ALL);
-		superblock->dataSize = 0;
-		superblocks.push_back(superblock);
-		return superblock;
+
+		if (superblocksEmpty.empty()) {
+			Superblock *superblock = (Superblock *) malloc(sizeof(Superblock) + SUPERBLOCK_SIZE_ALL);
+			superblock->dataSize = 0;
+			superblocksAll.push_back(superblock);
+			return superblock;
+		} else {
+			Superblock *superblock = superblocksEmpty.back();
+			superblocksEmpty.pop_back();
+			assert(superblock->dataSize == 0);
+			return superblock;
+		}
+	}
+
+	void returnSuperBlock(Superblock *superblock) {
+		assert(superblock->dataSize == 0);
+		superblocksEmpty.push_back(superblock);
 	}
 
 	~GlobalAllocator() {
-		for (Superblock *superblock : superblocks) {
+		for (Superblock *superblock : superblocksAll) {
 //			assert(superblock->dataSize == 0);
 			free(superblock);
 		}
@@ -101,24 +115,37 @@ GlobalAllocator globalAllocator;
 mutex globalAllocatorMutex;
 
 struct ListOfBlocks {
-	Block *head_ = nullptr;
+	Block *head = nullptr;
 
 	void push_back(Block *block) {
-		block->nextBlockSameSize = head_;
-		head_ = block;
+		block->nextBlockSameSize = head;
+		head = block;
 	}
 
 	Block *back() {
-		return head_;
+		return head;
 	}
 
 	void pop_back() {
-		assert(head_ != nullptr);
-		head_ = head_->nextBlockSameSize;
+		assert(head != nullptr);
+		head = head->nextBlockSameSize;
 	}
 
 	bool empty() {
-		return head_ == nullptr;
+		return head == nullptr;
+	}
+
+	template<typename Lambda>
+	void remove_if(Lambda lambda) {
+		while (head != nullptr && lambda(head)) {
+			head = head->nextBlockSameSize;
+		}
+
+		for (Block *block = head; block != nullptr; block = block->nextBlockSameSize) {
+			while (block->nextBlockSameSize != nullptr && lambda(block->nextBlockSameSize)) {
+				block->nextBlockSameSize = block->nextBlockSameSize->nextBlockSameSize;
+			}
+		}
 	}
 };
 
@@ -134,7 +161,6 @@ struct LocalAllocator {
 	}
 
 	Superblock *getSuperBlock() {
-		//dbgl("getSuperBlock", threadIndex);
 		Superblock *superblock = globalAllocator.getSuperBlock();
 		for (int i = 0; i < NUMBER_MINBLOCKS_IN_SUPERBLOCK; ++i) {
 			Block *block = superblock->getKthMinblock(i);
@@ -147,8 +173,20 @@ struct LocalAllocator {
 		return superblock;
 	}
 
+	void returnSuperBlock(Superblock *superblock) {
+		auto it = find(superblocks.begin(), superblocks.end(), superblock);
+		assert(it != superblocks.end());
+		superblocks.erase(it);
+		for (ListOfBlocks &listOfBlocks : blocksBySize) {
+			listOfBlocks.remove_if([superblock](Block *block) { return (char *) superblock <= (char *) block && (char *) block < (char *) superblock + SUPERBLOCK_SIZE_ALL; });
+		}
+
+		lock_guard<mutex> lock(globalAllocatorMutex);
+		globalAllocator.returnSuperBlock(superblock);
+	}
+
 	char *mtalloc(size_t size) {
-		assert(size <= MINBLOCK_SIZE_DATA * NUMBER_MINBLOCKS_IN_SUPERBLOCK);
+		assert(size <= SUPERBLOCK_SIZE_DATA);
 		Block *block = getBlock(size);
 		if (block == nullptr) {
 			// блок равного или большего размера не нашёлся
@@ -156,8 +194,8 @@ struct LocalAllocator {
 			Superblock *superblock = getSuperBlock();
 			blocksBySize.back().push_back(superblock->getLargestBlock());
 			block = getBlock(size);
+			assert(block != nullptr);
 		}
-		//dbgl("+", threadIndex, size, block);
 
 		Superblock *superblock = block->superblock;
 		superblock->dataSize += block->getDataSize();
@@ -189,12 +227,14 @@ struct LocalAllocator {
 	}
 
 	void mtfree(char *data) {
-		//dbgl("-", threadIndex, data);
 		Block *block = Block::getBlockFromData(data);
 		if (block->threadIndex == threadIndex) {
 			blocksBySize[block->blockType].push_back(block);
 			Superblock *superblock = block->superblock;
 			superblock->dataSize -= block->getDataSize();
+			if (superblock->dataSize == 0) {
+				returnSuperBlock(superblock);
+			}
 		} else {
 			assert(false);
 		}
@@ -257,9 +297,9 @@ void test(int numberThreads, int numberOperations, bool useCustomMalloc) {
 }
 
 int main() {
-	for (int i = 0; i < 10000; ++i) {
-		mtalloc(rand() % 100);
-	}
+//	for (int i = 0; i < Num iterations и Num items; ++i) {
+//		mtalloc(rand() % 100);
+//	}
 	return 0;
 }
 
