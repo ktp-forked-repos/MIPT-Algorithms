@@ -29,6 +29,8 @@ struct Superblock {
 	Block *getLargestBlock();
 
 	Block *getKthMinblock(int k);
+
+	bool hasBlock(Block *pBlock);
 };
 
 int log2i(size_t size) {
@@ -76,6 +78,11 @@ Block *Superblock::getLargestBlock() {
 	return (Block *) getSuperblockData();
 }
 
+bool Superblock::hasBlock(Block *block) {
+	char *data = getSuperblockData();
+	return data <= (char *) block && (char *) block < data + SUPERBLOCK_SIZE_ALL;
+}
+
 struct GlobalAllocator {
 //    суперблок --- несколько последовательных минблоков
 //    минблок --- <Block> и <MINBLOCK_SIZE_DATA байт>
@@ -105,7 +112,7 @@ struct GlobalAllocator {
 
 	~GlobalAllocator() {
 		for (Superblock *superblock : superblocksAll) {
-//			assert(superblock->dataSize == 0);
+			assert(superblock->dataSize == 0);
 			free(superblock);
 		}
 	}
@@ -178,7 +185,7 @@ struct LocalAllocator {
 		assert(it != superblocks.end());
 		superblocks.erase(it);
 		for (ListOfBlocks &listOfBlocks : blocksBySize) {
-			listOfBlocks.remove_if([superblock](Block *block) { return (char *) superblock <= (char *) block && (char *) block < (char *) superblock + SUPERBLOCK_SIZE_ALL; });
+			listOfBlocks.remove_if([superblock](Block *block) { return superblock->hasBlock(block); });
 		}
 
 		lock_guard<mutex> lock(globalAllocatorMutex);
@@ -297,9 +304,22 @@ void test(int numberThreads, int numberOperations, bool useCustomMalloc) {
 }
 
 int main() {
-//	for (int i = 0; i < Num iterations и Num items; ++i) {
-//		mtalloc(rand() % 100);
-//	}
+	int num_iterations = 10;
+	int num_items = 100000;
+	for (int i = 0; i < num_iterations; ++i) {
+		vector<void *> pointers(num_items);
+		for (void *&pointer : pointers) {
+			pointer = mtalloc(rand() % 100);
+		}
+
+		for (void *pointer : pointers) {
+			mtfree(pointer);
+		}
+
+		for (ListOfBlocks list  : getLocalAllocator().blocksBySize) {
+			assert(list.empty());
+		}
+	}
 	return 0;
 }
 
