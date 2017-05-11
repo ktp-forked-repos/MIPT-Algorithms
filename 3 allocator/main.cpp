@@ -8,6 +8,7 @@ struct Superblock;
 
 struct Block {
 	Superblock *superblock;
+	Block *nextBlockSameSize;
 	int threadIndex;
 	int blockType;
 
@@ -90,7 +91,7 @@ struct GlobalAllocator {
 
 	~GlobalAllocator() {
 		for (Superblock *superblock : superblocks) {
-			assert(superblock->dataSize == 0);
+//			assert(superblock->dataSize == 0);
 			free(superblock);
 		}
 	}
@@ -99,10 +100,33 @@ struct GlobalAllocator {
 GlobalAllocator globalAllocator;
 mutex globalAllocatorMutex;
 
+struct ListOfBlocks {
+	Block *head_ = nullptr;
+
+	void push_back(Block *block) {
+		block->nextBlockSameSize = head_;
+		head_ = block;
+	}
+
+	Block *back() {
+		return head_;
+	}
+
+	void pop_back() {
+		assert(head_ != nullptr);
+		head_ = head_->nextBlockSameSize;
+	}
+
+	bool empty() {
+		return head_ == nullptr;
+	}
+};
+
 struct LocalAllocator {
 	int threadIndex;
 	vector<Superblock *> superblocks;
-	vector<std::list<Block *>> blocksBySize;
+//	vector<std::list<Block *>> blocksBySize;
+	vector<ListOfBlocks> blocksBySize;
 
 	LocalAllocator() : blocksBySize(NUMBER_BLOCK_TYPES) {
 		static atomic_int numberLocalAllocators;
@@ -116,6 +140,8 @@ struct LocalAllocator {
 			Block *block = superblock->getKthMinblock(i);
 			block->threadIndex = threadIndex;
 			block->superblock = superblock;
+			block->blockType = -1;
+			block->nextBlockSameSize = nullptr;
 		}
 		superblocks.push_back(superblock);
 		return superblock;
