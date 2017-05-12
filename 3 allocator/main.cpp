@@ -42,8 +42,8 @@ int log2i(size_t size) {
 	return log;
 }
 
-const int NUMBER_MINBLOCKS_IN_SUPERBLOCK = 8 * 1024;
-const int MINBLOCK_SIZE_DATA = 128;
+const int NUMBER_MINBLOCKS_IN_SUPERBLOCK = 1024;
+const int MINBLOCK_SIZE_DATA = 64;
 const int MINBLOCK_SIZE_ALL = MINBLOCK_SIZE_DATA + sizeof(Block);
 const int SUPERBLOCK_SIZE_DATA = NUMBER_MINBLOCKS_IN_SUPERBLOCK * MINBLOCK_SIZE_DATA;
 const int SUPERBLOCK_SIZE_ALL = NUMBER_MINBLOCKS_IN_SUPERBLOCK * MINBLOCK_SIZE_ALL;
@@ -94,6 +94,9 @@ struct GlobalAllocator {
 
 		if (superblocksEmpty.empty()) {
 			Superblock *superblock = (Superblock *) malloc(sizeof(Superblock) + SUPERBLOCK_SIZE_ALL);
+			if (superblock == nullptr) {
+				throw new runtime_error("malloc returns nullptr");
+			}
 			superblock->dataSize = 0;
 			superblocksAll.push_back(superblock);
 			return superblock;
@@ -234,6 +237,9 @@ struct LocalAllocator {
 	}
 
 	void mtfree(char *data) {
+		if (data == nullptr) {
+			return;
+		}
 		Block *block = Block::getBlockFromData(data);
 		if (block->threadIndex == threadIndex) {
 			blocksBySize[block->blockType].push_back(block);
@@ -254,7 +260,11 @@ LocalAllocator &getLocalAllocator() {
 }
 
 extern void *mtalloc(size_t size) {
-	return getLocalAllocator().mtalloc(size);
+	try {
+		return getLocalAllocator().mtalloc(size);
+	} catch (runtime_error) {
+		return nullptr;
+	}
 }
 
 extern void mtfree(void *data) {
