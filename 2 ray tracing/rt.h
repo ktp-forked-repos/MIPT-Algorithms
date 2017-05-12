@@ -4,7 +4,7 @@
 using namespace std;
 
 #include "ray_tracing.h"
-const bool COLORS255 = true;
+const bool COLORS255 = false;
 
 void trim(string &s) {
 	s.erase(0, s.find_first_not_of(" \t"));

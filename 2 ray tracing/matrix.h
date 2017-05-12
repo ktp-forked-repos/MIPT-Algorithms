@@ -45,6 +45,7 @@ typedef vector<vector<Color>> Matrix;
 Color white(1, 1, 1);
 Color black(0, 0, 0);
 Color cyan(0, 1, 1);
+Color green(0, 1, 0);
 
 ostream &operator<<(ostream &out, Color color) {
 	return out << "(" << color.r << " " << color.g << " " << color.b << ")";
