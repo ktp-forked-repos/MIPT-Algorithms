@@ -4,6 +4,8 @@ using namespace std;
 #include "/home/dima/C++/debug.h"
 #endif
 
+const int NUMBER_MINBLOCKS_IN_SUPERBLOCK = 1024;
+
 struct Superblock;
 
 struct Block {
@@ -42,7 +44,6 @@ int log2i(size_t size) {
 	return log;
 }
 
-const int NUMBER_MINBLOCKS_IN_SUPERBLOCK = 1024;
 const int MINBLOCK_SIZE_DATA = 64;
 const int MINBLOCK_SIZE_ALL = MINBLOCK_SIZE_DATA + sizeof(Block);
 const int SUPERBLOCK_SIZE_DATA = NUMBER_MINBLOCKS_IN_SUPERBLOCK * MINBLOCK_SIZE_DATA;
@@ -83,13 +84,32 @@ bool Superblock::hasBlock(Block *block) {
 	return data <= (char *) block && (char *) block < data + SUPERBLOCK_SIZE_ALL;
 }
 
+struct LocalAllocator;
+
 struct GlobalAllocator {
 //    суперблок --- несколько последовательных минблоков
 //    минблок --- <Block> и <MINBLOCK_SIZE_DATA байт>
 	vector<Superblock *> superblocksAll;
 	vector<Superblock *> superblocksEmpty;
+	mutex superblocksMutex;
+
+	map<int, LocalAllocator *> localAllocators;
+	mutex localAllocatorsMutex;
+
+	void registerNewLocalAllocator(int index, LocalAllocator *localAllocator) {
+		lock_guard<mutex> lock(localAllocatorsMutex);
+		assert(localAllocators.find(index) == localAllocators.end());
+		localAllocators[index] = localAllocator;
+	}
+
+	void unregisterLocalAllocator(int index) {
+		lock_guard<mutex> lock(localAllocatorsMutex);
+		assert(localAllocators.find(index) != localAllocators.end());
+		localAllocators.erase(index);
+	}
 
 	Superblock *getSuperBlock() {
+		lock_guard<mutex> lock(superblocksMutex);
 		assert(sizeof(char) == 1);
 
 		if (superblocksEmpty.empty()) {
@@ -109,6 +129,7 @@ struct GlobalAllocator {
 	}
 
 	void returnSuperBlock(Superblock *superblock) {
+		lock_guard<mutex> lock(superblocksMutex);
 		assert(superblock->dataSize == 0);
 		superblocksEmpty.push_back(superblock);
 	}
@@ -121,8 +142,10 @@ struct GlobalAllocator {
 	}
 };
 
-GlobalAllocator globalAllocator;
-mutex globalAllocatorMutex;
+GlobalAllocator &getGlobalAllocator() {
+	static GlobalAllocator allocator;
+	return allocator;
+}
 
 struct ListOfBlocks {
 	Block *head = nullptr;
@@ -168,10 +191,11 @@ struct LocalAllocator {
 	LocalAllocator() : blocksBySize(NUMBER_BLOCK_TYPES) {
 		static atomic_int numberLocalAllocators;
 		threadIndex = numberLocalAllocators++;
+		getGlobalAllocator().registerNewLocalAllocator(threadIndex, this);
 	}
 
 	Superblock *getSuperBlock() {
-		Superblock *superblock = globalAllocator.getSuperBlock();
+		Superblock *superblock = getGlobalAllocator().getSuperBlock();
 		for (int i = 0; i < NUMBER_MINBLOCKS_IN_SUPERBLOCK; ++i) {
 			Block *block = superblock->getKthMinblock(i);
 			block->threadIndex = threadIndex;
@@ -191,8 +215,7 @@ struct LocalAllocator {
 			listOfBlocks.remove_if([superblock](Block *block) { return superblock->hasBlock(block); });
 		}
 
-		lock_guard<mutex> lock(globalAllocatorMutex);
-		globalAllocator.returnSuperBlock(superblock);
+		getGlobalAllocator().returnSuperBlock(superblock);
 	}
 
 	char *mtalloc(size_t size) {
@@ -200,7 +223,6 @@ struct LocalAllocator {
 		Block *block = getBlock(size);
 		if (block == nullptr) {
 			// блок равного или большего размера не нашёлся
-			lock_guard<mutex> lock(globalAllocatorMutex);
 			Superblock *superblock = getSuperBlock();
 			blocksBySize.back().push_back(superblock->getLargestBlock());
 			block = getBlock(size);
@@ -251,6 +273,10 @@ struct LocalAllocator {
 		} else {
 			assert(false);
 		}
+	}
+
+	~LocalAllocator() {
+		getGlobalAllocator().unregisterLocalAllocator(threadIndex);
 	}
 };
 
@@ -313,7 +339,7 @@ void test(int numberThreads, int numberOperations, bool useCustomMalloc) {
 	}
 }
 
-int main() {
+void worker() {
 	int num_iterations = 10;
 	int num_items = 100000;
 	for (int i = 0; i < num_iterations; ++i) {
@@ -329,6 +355,18 @@ int main() {
 		for (ListOfBlocks list  : getLocalAllocator().blocksBySize) {
 			assert(list.empty());
 		}
+	}
+}
+
+int main() {
+	int numberThreads = 4;
+	vector<thread> threads;
+	for (int i = 0; i < numberThreads; ++i) {
+		threads.emplace_back(worker);
+	}
+
+	for (thread &t : threads) {
+		t.join();
 	}
 	return 0;
 }
