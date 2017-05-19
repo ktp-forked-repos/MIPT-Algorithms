@@ -13,6 +13,7 @@ struct Block {
 	Block *nextBlockSameSize;
 	int threadIndex;
 	int blockType;
+	atomic<Block *> nextBlockToDelete;
 
 	char *getBlockData();
 
@@ -25,6 +26,7 @@ struct Block {
 
 struct Superblock {
 	int dataSize;
+//	Block *freeBlocks[NUMBER_MINBLOCKS_IN_SUPERBLOCK];
 
 	char *getSuperblockData();
 
@@ -102,10 +104,15 @@ struct GlobalAllocator {
 		localAllocators[index] = localAllocator;
 	}
 
-	void unregisterLocalAllocator(int index) {
+	void unregisterLocalAllocator(int /*index*/) {
+//		lock_guard<mutex> lock(localAllocatorsMutex);
+//		assert(localAllocators.find(index) != localAllocators.end());
+//		localAllocators.erase(index);
+	}
+
+	LocalAllocator *getLocalAllocator(int index) {
 		lock_guard<mutex> lock(localAllocatorsMutex);
-		assert(localAllocators.find(index) != localAllocators.end());
-		localAllocators.erase(index);
+		return localAllocators[index];
 	}
 
 	Superblock *getSuperBlock() {
@@ -136,7 +143,7 @@ struct GlobalAllocator {
 
 	~GlobalAllocator() {
 		for (Superblock *superblock : superblocksAll) {
-			assert(superblock->dataSize == 0);
+//			assert(superblock->dataSize == 0);
 			free(superblock);
 		}
 	}
@@ -182,11 +189,38 @@ struct ListOfBlocks {
 	}
 };
 
+struct LockFreeStack {
+	Block head;
+
+	LockFreeStack() {
+		head.nextBlockToDelete = nullptr;
+	}
+
+	void add(Block *block) {
+		Block *blockFirst;
+		do {
+			blockFirst = head.nextBlockToDelete;
+			block->nextBlockToDelete = blockFirst;
+		} while (!head.nextBlockToDelete.compare_exchange_weak(blockFirst, block));
+//		cout << "add " << head.nextBlockToDelete.load() << endl;
+	}
+
+	Block *popAll() {
+//		cout << "pop " << head.nextBlockToDelete.load() << endl;
+		Block *result = nullptr;
+		do {
+			result = head.nextBlockToDelete;
+		} while (!head.nextBlockToDelete.compare_exchange_weak(result, nullptr));
+		return result;
+	}
+};
+
 struct LocalAllocator {
 	int threadIndex;
 	vector<Superblock *> superblocks;
 //	vector<std::list<Block *>> blocksBySize;
 	vector<ListOfBlocks> blocksBySize;
+	LockFreeStack blocksToDelete;
 
 	LocalAllocator() : blocksBySize(NUMBER_BLOCK_TYPES) {
 		static atomic_int numberLocalAllocators;
@@ -202,12 +236,15 @@ struct LocalAllocator {
 			block->superblock = superblock;
 			block->blockType = -1;
 			block->nextBlockSameSize = nullptr;
+//			superblock->freeBlocks[i] = nullptr;
 		}
 		superblocks.push_back(superblock);
+//		dbgl("getSuperBlock", superblock);
 		return superblock;
 	}
 
 	void returnSuperBlock(Superblock *superblock) {
+//		dbgl("returnSuperBlock", superblock);
 		auto it = find(superblocks.begin(), superblocks.end(), superblock);
 		assert(it != superblocks.end());
 		superblocks.erase(it);
@@ -258,20 +295,36 @@ struct LocalAllocator {
 		return nullptr;
 	}
 
+	void freeBlock(Block *block) {
+		assert(0 <= block->blockType && block->blockType < NUMBER_BLOCK_TYPES);
+		blocksBySize[block->blockType].push_back(block);
+		Superblock *superblock = block->superblock;
+		superblock->dataSize -= block->getDataSize();
+		if (superblock->dataSize == 0) {
+			returnSuperBlock(superblock);
+		}
+	}
+
 	void mtfree(char *data) {
 		if (data == nullptr) {
 			return;
 		}
 		Block *block = Block::getBlockFromData(data);
 		if (block->threadIndex == threadIndex) {
-			blocksBySize[block->blockType].push_back(block);
-			Superblock *superblock = block->superblock;
-			superblock->dataSize -= block->getDataSize();
-			if (superblock->dataSize == 0) {
-				returnSuperBlock(superblock);
+			freeBlock(block);
+
+			thread_local static int number = 0;
+			if (++number % 100 == 0) {
+				Block *blocks = blocksToDelete.popAll();
+				while (blocks != nullptr) {
+					freeBlock(blocks);
+					blocks = block->nextBlockToDelete;
+				}
 			}
 		} else {
-			assert(false);
+//			dbgl("mtfree", block->threadIndex, threadIndex);
+			LocalAllocator *another = getGlobalAllocator().getLocalAllocator(block->threadIndex);
+			another->blocksToDelete.add(block);
 		}
 	}
 
@@ -358,13 +411,39 @@ void worker() {
 	}
 }
 
-int main() {
+void test() {
 	int numberThreads = 4;
 	vector<thread> threads;
 	for (int i = 0; i < numberThreads; ++i) {
 		threads.emplace_back(worker);
 	}
 
+	for (thread &t : threads) {
+		t.join();
+	}
+}
+
+int main() {
+	vector<void *> datas;
+	mutex m;
+	auto worker = [&] {
+		for (int i = 0; i < 100000; ++i) {
+			lock_guard<mutex> lock(m);
+			if (!datas.empty()) {
+				void *data = datas.back();
+				datas.pop_back();
+				mtfree(data);
+			}
+			datas.push_back(mtalloc(rand() % 100 + 1));
+			this_thread::yield();
+		}
+	};
+
+	int numberThreads = 4;
+	vector<thread> threads;
+	for (int i = 0; i < numberThreads; ++i) {
+		threads.emplace_back(worker);
+	}
 	for (thread &t : threads) {
 		t.join();
 	}
