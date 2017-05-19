@@ -13,7 +13,7 @@ struct Material {
 	double refract;
 };
 
-Material cyanMaterial = {"cyan", {0, 1, 1}, 0, 0, 0};
+Material cyanMaterial = {"cyan", {0, 255, 255}, 1, 0, 0};
 
 ostream &operator<<(ostream &out, Material material) {
 	return out << material.name;

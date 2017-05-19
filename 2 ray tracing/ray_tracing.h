@@ -135,6 +135,9 @@ struct RayTracing {
 		Object *object = intersect.object;
 		Point point = intersect.point;
 		Color color = object->material.color;
+		if (object->isTexture()) {
+			color = ((QuadrangleTexture *) object)->getTextureColor(intersect.point);
+		}
 
 //		light
 		double alphaOwn = getLightRatio(intersect);

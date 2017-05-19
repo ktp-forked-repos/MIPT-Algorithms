@@ -1,3 +1,7 @@
+#include "CImg.h"
+using namespace cimg_library;
+typedef CImg<unsigned char> Image;
+
 #include <GL/glut.h>
 #include <bits/stdc++.h>
 using namespace std;
@@ -57,14 +61,42 @@ void printTriangles() {
 	}
 }
 
+void test() {
+	Image src("image.jpg");
+	int imageW = src.width();
+	int imageH = src.height();
+	matrix = createMatrix(h, w);
+	for (int i = 0; i < h; ++i) {
+		for (int j = 0; j < w; ++j) {
+			matrix[i][j] = Color(white);
+		}
+	}
+	for (int i = 0; i < imageH; ++i) {
+		for (int j = 0; j < imageW; ++j) {
+			matrix[h - i - 1][j] = getColor(src, i, j);
+		}
+	}
+	Glut glut(w, h, display);
+}
+
 int main() {
 //	srand(time(nullptr));
 	srand(0);
 //	ifstream in("examples2/transparent.rt");
-	ifstream in("examples/triangles.rt");
+	ifstream in("examples/quadrangles_texture.rt");
 	RayTracing rt;
 //	rt.init();
 	in >> rt;
+
+	rt.objects.push_back(new QuadrangleTexture(
+			Point(700, 700, 200),
+			Point(700, 300, 200),
+			Point(100, 200, 400),
+			Point(100, 700, 400),
+			cyanMaterial,
+			Image("image.jpg")
+	));
+
 	matrix = rt.getMatrix();
 	Glut glut(w, h, display);
 	return 0;

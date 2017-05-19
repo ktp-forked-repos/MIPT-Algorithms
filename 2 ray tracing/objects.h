@@ -45,6 +45,10 @@ struct Object {
 		return {true, this, t, ray.pointAt(t)};
 	}
 
+	virtual bool isTexture() {
+		return false;
+	}
+
 	virtual ~Object() {}
 };
 
@@ -177,6 +181,33 @@ struct Quadrangle : public Object {
 			normal *= -1;
 		}
 		return normal;
+	}
+};
+
+Color getColor(Image image, int y, int x) {
+	unsigned char r = image(x, y, 0, 0);
+	unsigned char g = image(x, y, 0, 1);
+	unsigned char b = image(x, y, 0, 2);
+	return Color(r / 255.0, g / 255.0, b / 255.0);
+}
+
+struct QuadrangleTexture : public Quadrangle {
+	Image image;
+
+	QuadrangleTexture(const Point &a, const Point &b, const Point &c, const Point &d, const Material &material, Image image) : Quadrangle(a, b, c, d, material), image(image) {}
+
+	Color getTextureColor(Point point) {
+		Point ab = (b - a).normalized();
+		Point ad = (d - a).normalized();
+		Point abProjection = ab * ((point - a) ^ ab);
+		Point adProjection = ad * ((point - a) ^ ad);
+		int i = abProjection.length() / (b - a).length() * image.height();
+		int j = adProjection.length() / (d - a).length() * image.width();
+		return getColor(image, i, j);
+	}
+
+	virtual bool isTexture() {
+		return true;
 	}
 };
 
